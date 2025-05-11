@@ -17,24 +17,24 @@ class OptionButton extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        width: 130,
-        height: 57,
-        padding: const EdgeInsets.all(6),
+        width: 120,
+        height: 45,
+        padding: const EdgeInsets.all(0),
         decoration: BoxDecoration(
-          color: const Color.fromARGB(221, 73, 73, 73).withOpacity(0.2),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: Colors.white24),
+          color: const Color.fromARGB(221, 122, 122, 122).withOpacity(0.2),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color.fromARGB(58, 199, 199, 199)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: Colors.white, size: 30),
-            const SizedBox(width: 12),
+            Icon(icon, color: Colors.white, size: 25),
+            const SizedBox(width: 10),
             Text(
               title,
               style: const TextStyle(
                 color: Colors.white,
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.bold,
               ),
             ),

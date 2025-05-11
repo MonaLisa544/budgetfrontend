@@ -1,5 +1,4 @@
 import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 class TransactionItem extends StatelessWidget {
@@ -8,62 +7,66 @@ class TransactionItem extends StatelessWidget {
   final String subtitle;
   final String amount;
   final String time;
+  final VoidCallback? onPressed; // ⬅️ товч дарах үед хийх үйлдэл
 
   const TransactionItem({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
     required this.amount,
     required this.time,
+    this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return _BlurredCard(
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: Colors.blueAccent,
-          child: Icon(
-            icon,
-            color: Colors.white,
-            size: 22, // <<< ИКОНЫ ХЭМЖЭЭГ энд тохируулна!
+    return GestureDetector(
+      onTap: onPressed, // ⬅️ бүхэлдээ товч шиг ажиллана
+      child: _BlurredCard(
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          leading: CircleAvatar(
+            backgroundColor: Colors.blueAccent,
+            child: Icon(icon, color: Colors.white, size: 20),
           ),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16, // <<< TITLE-ийн fontSize энд тохирно!
-            fontWeight: FontWeight.w600,
+          title: Text(
+            title,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: const TextStyle(
-            color: Colors.white70,
-            fontSize: 12, // <<< SUBTITLE-ийн fontSize энд тохирно!
+          subtitle: Text(
+            subtitle,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+            ),
           ),
-        ),
-        trailing: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              amount,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+          trailing: Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(
+                amount,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            Text(
-              time,
-              style: const TextStyle(fontSize: 12, color: Colors.white70),
-            ),
-          ],
+              Text(
+                time,
+                style: const TextStyle(fontSize: 12, color: Colors.white70),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
 
 class _BlurredCard extends StatelessWidget {
   final Widget child;

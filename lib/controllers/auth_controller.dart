@@ -1,4 +1,4 @@
-import 'package:budgetfrontend/views/main_tab/main_tab_view.dart';
+import 'package:budgetfrontend/views/home/main_tab_view.dart';
 import 'package:get/get.dart';
 import '../services/auth_service.dart';
 

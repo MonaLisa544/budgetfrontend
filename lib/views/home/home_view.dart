@@ -1,19 +1,27 @@
 import 'dart:ui';
-import 'package:budgetfrontend/widgets/common/color_extension.dart';
-import 'package:budgetfrontend/views/main_tab/main_bar_view.dart';
-import 'package:budgetfrontend/widgets/line_chart.dart';
+import 'package:budgetfrontend/views/home/create_family.dart';
+import 'package:budgetfrontend/views/goals/goal_view.dart';
+import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter/material.dart';
 import 'package:budgetfrontend/widgets/option_btn.dart';
 import 'package:budgetfrontend/widgets/transaction_item.dart';
-import 'package:dotted_border/dotted_border.dart';
-import 'package:flutter/material.dart';
+import 'package:budgetfrontend/widgets/line_chart.dart';
+import 'package:budgetfrontend/views/home/main_bar_view.dart';
 
-class HomeView extends StatelessWidget {
+class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
   @override
+  State<HomeView> createState() => _HomeViewState();
+}
+
+class _HomeViewState extends State<HomeView> {
+  bool hasFamily = false;
+  String? createdFamilyName;
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
+      backgroundColor: Colors.white,
       appBar: MainBarView(
         title: 'Сайна уу! Хонгороо',
         onNotfPressed: () {},
@@ -44,162 +52,23 @@ class HomeView extends StatelessWidget {
               ),
             ),
           ),
-
           SingleChildScrollView(
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(5),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 5),
-                    Container(
-                      alignment: Alignment.centerLeft,
-                      height: 240,
-                      width: 420,
-                      padding: const EdgeInsets.all(30),
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage("assets/icon/card2.png"),
-                          fit: BoxFit.fill,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color.fromARGB(
-                              255,
-                              229,
-                              242,
-                              253,
-                            ).withOpacity(0.3),
-                            offset: Offset(15, -8),
-                            blurRadius: 0.5,
-                            spreadRadius: -5,
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 10),
-                          const Text(
-                            'Total Balance:',
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 255, 255, 255),
-                              fontSize: 22,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          const Text(
-                            '£3,236.00',
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 255, 255, 255),
-                              fontSize: 40,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              // ✅ Savings Button
-                              OptionButton(
-                                icon: Icons.savings_outlined,
-                                title: "Saving",
-                                //subtitle: "Your Savings",
-                                onTap: () {
-                                  // Saving дарсан үед юу хийхийг энд бич
-                                },
-                              ),
-                              SizedBox(width: 7),
-
-                              // ✅ Loan Button
-                              OptionButton(
-                                icon: Icons.credit_card_outlined,
-                                title: "Loan",
-                                onTap: () {
-                                  // Loan дарсан үед юу хийхийг энд бич
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        Text(
-                          "   Analytics",
-                          style: TextStyle(
-                            color: TColor.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            "View All ➔",
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 23, 130, 218),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    SizedBox(height: 200, child: TransactionLineChart()),
-                    // Latest transactions section
-                    SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "  Last Transaction",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const Spacer(),
-                        TextButton(
-                          onPressed: () {},
-                          child: const Text(
-                            "View All ➔",
-                            style: TextStyle(
-                              color: Color.fromARGB(255, 23, 130, 218),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 0,
-                        vertical: 0,
-                      ),
-                      physics:
-                          const NeverScrollableScrollPhysics(), // Disable scroll in this ListView
-                      shrinkWrap:
-                          true, // Makes ListView take only as much space as it needs
-                      itemCount: 3, // Use the length of your list here
-                      itemBuilder: (context, index) {
-                        return TransactionItem(
-                          icon: Icons.shopping_cart,
-                          title: 'IODash Purchase',
-                          subtitle: 'Online payment',
-                          amount: '-\$28.00',
-                          time: '4 Aug 1:00 PM',
-                        );
-                      },
-                    ),
+                    const SizedBox(height: 15),
+                    buildCarousel(context),
+                    const SizedBox(height: 10),
+                    hasFamily
+                        ? _buildFamilyMembersSection()
+                        : _buildCreateFamilyPrompt(),
+                    const SizedBox(height: 20),
+                    _buildAnalyticsSection(),
+                    const SizedBox(height: 20),
+                    _buildLatestTransactions(),
                     const SizedBox(height: 20),
                   ],
                 ),
@@ -210,25 +79,274 @@ class HomeView extends StatelessWidget {
       ),
     );
   }
-}
 
-// Avatar with Name
-class _AvatarWithName extends StatelessWidget {
-  final String imagePath;
-  final String name;
+  Widget buildCarousel(BuildContext context) {
+    return SizedBox(
+      height: 200,
+      child: CarouselSlider(
+        options: CarouselOptions(
+          height: 180.0,
+          enlargeCenterPage: true,
+          autoPlay: true,
+          aspectRatio: 10 / 16,
+          viewportFraction: 0.95,
+        ),
+        items:
+            [1, 2].map((i) {
+              return Builder(
+                builder: (BuildContext context) {
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 2.0),
+                    width: MediaQuery.of(context).size.width,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(15),
+                      image: const DecorationImage(
+                        image: AssetImage("assets/icon/card3.png"),
+                        fit: BoxFit.fill,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(15.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Total Balance:',
+                            style: TextStyle(color: Colors.white, fontSize: 18),
+                          ),
+                          const SizedBox(height: 3),
+                          const Text(
+                            '₮3,236,000',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              OptionButton(
+                                icon: Icons.savings_outlined,
+                                title: "Saving",
+                                onTap:
+                                    () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const GoalView(),
+                                      ),
+                                    ),
+                              ),
+                              OptionButton(
+  icon: Icons.credit_card_outlined,
+  title: "Loan",
+  onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const GoalView(),
+                                      ),
+                                    ),
+)
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+            }).toList(),
+      ),
+    );
+  }
 
-  const _AvatarWithName({required this.imagePath, required this.name});
+  Widget _buildCreateFamilyPrompt() {
+    return Center(
+      child: Column(
+        children: [
+          const Text(
+            "Та одоогоор гэр бүл үүсгээгүй байна.",
+            style: TextStyle(color: Colors.white),
+          ),
+          const SizedBox(height: 10),
+          ElevatedButton.icon(
+  onPressed: () async {
+    final familyName = await showFamilyDialog(context); // 👈 await ашиглана
+    if (familyName != null) {
+      setState(() {
+        hasFamily = true;
+        createdFamilyName = familyName;
+      });
 
-  @override
-  Widget build(BuildContext context) {
+     
+    }
+  },
+  icon: const Icon(Icons.group_add),
+  label: const Text("Гэр бүлтэй болох"),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.white,
+    foregroundColor: Colors.black,
+  ),
+),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFamilyMembersSection() {
+    final members = [
+      {"name": "Ээж", "avatar": "assets/img/mother.png"},
+      {"name": "Аав", "avatar": "assets/img/father.png"},
+      {"name": "Хүү", "avatar": "assets/img/son.png"},
+    ];
+
     return Column(
       children: [
-        CircleAvatar(backgroundImage: AssetImage(imagePath), radius: 25),
+        Row(
+          children: [
+            const Text(
+              "     Family Members",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: () {},
+              child: const Text(
+                "View All ➔",
+                style: TextStyle(
+                  color: Color.fromARGB(255, 23, 130, 218),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        SizedBox(
+          height: 75,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            itemCount: members.length + 1,
+            itemBuilder: (context, index) {
+              if (index == members.length) return _buildAddMember();
+              final member = members[index];
+              return _buildFamilyMember(member["name"]!, member["avatar"]!);
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFamilyMember(String name, String avatarPath) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Column(
+        children: [
+          CircleAvatar(radius: 26, backgroundImage: AssetImage(avatarPath)),
+          const SizedBox(height: 4),
+          Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddMember() {
+    return Column(
+      children: [
+        CircleAvatar(
+          radius: 26,
+          backgroundColor: Colors.white.withOpacity(0.3),
+          child: const Icon(Icons.add, color: Colors.white, size: 28),
+        ),
         const SizedBox(height: 4),
-        Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+        const Text("Add", style: TextStyle(color: Colors.white, fontSize: 12)),
+      ],
+    );
+  }
+
+  Widget _buildAnalyticsSection() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            const Text(
+              "     Analytics",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: () {},
+              child: const Text(
+                "View All ➔",
+                style: TextStyle(
+                  color: Color.fromARGB(255, 23, 130, 218),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 15),
+          height: 200,
+          child: const TransactionLineChart(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLatestTransactions() {
+    return Column(
+      children: [
+        Row(
+          children: [
+            const Text(
+              "  Last Transaction",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const Spacer(),
+            TextButton(
+              onPressed: () {},
+              child: const Text(
+                "View All ➔",
+                style: TextStyle(
+                  color: Color.fromARGB(255, 23, 130, 218),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: 3,
+          itemBuilder: (context, index) {
+            return const TransactionItem(
+              icon: Icons.shopping_cart,
+              title: 'IODash Purchase',
+              subtitle: 'Online payment',
+              amount: '-₮28,000',
+              time: '4 Aug 1:00 PM',
+            );
+          },
+        ),
       ],
     );
   }
 }
-
-

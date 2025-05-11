@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
-Future<void> showBudgetInfoDialog(
-    BuildContext context, Map<String, dynamic> budget) {
+Future<void> showTransactionDetailDialog(
+    BuildContext context, Map<String, dynamic> transaction) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => BudgetInfoContent(budget: budget),
+    builder: (_) => TransactionDetailContent(transaction: transaction),
   );
 }
 
-class BudgetInfoContent extends StatelessWidget {
-  final Map<String, dynamic> budget;
-  const BudgetInfoContent({super.key, required this.budget});
+class TransactionDetailContent extends StatelessWidget {
+  final Map<String, dynamic> transaction;
+  const TransactionDetailContent({super.key, required this.transaction});
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +50,7 @@ class BudgetInfoContent extends StatelessWidget {
               ),
               Center(
                 child: Text(
-                  "Төсөв дэлгэрэнгүй",
+                  "Гүйлгээний дэлгэрэнгүй",
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -59,12 +59,17 @@ class BudgetInfoContent extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              _buildDetailRow("Нэр:", budget['budget_name']),
-              _buildDetailRow("Дүн:", "${budget['amount']}₮"),
-              _buildDetailRow("Төрөл:", budget['category_name']),
-              _buildDetailRow("Тайлбар:", budget['description'] ?? "—"),
-              _buildDetailRow("Эхлэх огноо:", budget['start_date']),
-              _buildDetailRow("Дуусах огноо:", budget['due_date']),
+              CircleAvatar(
+                        radius: 45,
+                        backgroundImage: NetworkImage(
+                          'https://i.pravatar.cc/150?img=10',
+                        ),
+                      ),
+              _buildDetailRow("Огноо:", transaction['date']),
+              _buildDetailRow("Төрөл:", transaction['type']), // income/expense
+              _buildDetailRow("Дүн:", "${transaction['amount']}₮"),
+              _buildDetailRow("Категори:", transaction['category_name']),
+              _buildDetailRow("Тайлбар:", transaction['note'] ?? "—"),
               const SizedBox(height: 20),
               ElevatedButton.icon(
                 onPressed: () => Navigator.pop(context),
@@ -101,4 +106,3 @@ class BudgetInfoContent extends StatelessWidget {
     );
   }
 }
-

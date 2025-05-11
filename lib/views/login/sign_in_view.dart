@@ -3,7 +3,7 @@ import 'package:budgetfrontend/views/login/fade_animation.dart';
 import 'package:budgetfrontend/views/login/forgot_password_view.dart';
 import 'package:budgetfrontend/views/login/hex_color.dart';
 import 'package:budgetfrontend/views/login/sign_up_view.dart';
-import 'package:budgetfrontend/views/main_tab/main_tab_view.dart';
+import 'package:budgetfrontend/views/home/main_tab_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

@@ -1,48 +1,69 @@
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../models/transaction_model.dart';
+import '../services/api_service.dart';
 
 class TransactionController extends GetxController {
-  var transactions = <dynamic>[].obs; // Гүйлгээний жагсаалт
-  var isLoading = true.obs; // Гүйлгээний мэдээллийг ачаалж буй байдал
-
-  final String baseUrl = 'https://yourapiurl.com/api/v1/transactions'; // өөрийн API URL оруулна уу
+  final RxList<TransactionModel> transactions = <TransactionModel>[].obs;
+  final RxBool isLoading = false.obs;
 
   @override
   void onInit() {
     super.onInit();
-    fetchTransactions(); // Гүйлгээний мэдээллийг ачаалах
+    loadTransactions();
   }
 
-  // Гүйлгээний мэдээллийг ачаалах
-  fetchTransactions() async {
-    isLoading(true);
+   Future<void> loadTransactions() async {
+    isLoading.value = true;
     try {
-      var response = await http.get(Uri.parse(baseUrl));
-
-      if (response.statusCode == 200) {
-        var data = json.decode(response.body)['data'];
-        transactions.assignAll(data);
-      } else {
-        throw Exception('Failed to load transactions');
-      }
+      final list = await ApiService.getTransactions();
+      transactions.assignAll(list);
+    } catch (e) {
+      Get.snackbar('Алдаа', 'Гүйлгээ татаж чадсангүй');
     } finally {
-      isLoading(false);
+      isLoading.value = false;
     }
   }
 
-  // Шинэ гүйлгээ үүсгэх
-  createTransaction(Map<String, dynamic> transactionData) async {
-    var response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(transactionData),
-    );
+  
+Future<void> createTransaction(TransactionModel txn, String type) async {
+  isLoading.value = true;
+  try {
+    final newTxn = await ApiService.postTransactionWithType(txn, type);
+    if (newTxn != null) {
+      transactions.add(newTxn);
+      Get.back(); // form хаагдана
+    }
+  } catch (e) {
+    Get.snackbar('Алдаа', 'Гүйлгээ үүсгэж чадсангүй');
+  } finally {
+    isLoading.value = false;
+  }
+}
 
-    if (response.statusCode == 201) {
-      fetchTransactions(); // Гүйлгээ амжилттай үүссэн үед жагсаалтыг дахин ачаална
-    } else {
-      throw Exception('Failed to create transaction');
+  Future<void> updateTransaction(TransactionModel txn) async {
+    isLoading.value = true;
+    try {
+      final updated = await ApiService.updateTransaction(txn);
+      final index = transactions.indexWhere((t) => t.id == txn.id);
+      if (index != -1 && updated != null) {
+        transactions[index] = updated;
+      }
+    } catch (e) {
+      Get.snackbar('Алдаа', 'Гүйлгээ шинэчлэхэд алдаа гарлаа');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> deleteTransaction(int id) async {
+    isLoading.value = true;
+    try {
+      final success = await ApiService.deleteTransaction(id);
+      if (success) transactions.removeWhere((t) => t.id == id);
+    } catch (e) {
+      Get.snackbar('Алдаа', 'Гүйлгээ устгах үед алдаа гарлаа');
+    } finally {
+      isLoading.value = false;
     }
   }
 }
