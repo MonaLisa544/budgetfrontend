@@ -28,7 +28,7 @@ class MainTabView extends StatelessWidget {
           ),
         ),
         PersistentTabConfig(
-          screen: const BudgetView(),
+          screen:  BudgetView(),
           item: ItemConfig(
             icon: const Icon(Icons.wallet),
             title: "Budgets",
@@ -131,3 +131,5 @@ Widget build(BuildContext context) => DecoratedNavBar(
 );
 
 }
+
+

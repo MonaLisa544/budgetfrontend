@@ -1,5 +1,4 @@
 import 'package:budgetfrontend/views/home/back_app_bar.dart';
-import 'package:budgetfrontend/views/transactions/add_transaction_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../controllers/category_controller.dart';

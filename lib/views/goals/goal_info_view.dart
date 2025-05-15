@@ -1,27 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:budgetfrontend/models/budget_model.dart';
-import 'package:budgetfrontend/views/budgets/add_budget_view.dart'; // ✅ Засах үед хэрэгтэй
+import 'package:budgetfrontend/models/goal_model.dart';
+import 'package:budgetfrontend/controllers/goal_controller.dart';
 import 'package:get/get.dart';
-import 'package:budgetfrontend/controllers/budget_controller.dart';
 
-Future<void> showBudgetDetailDialog(BuildContext context, BudgetModel budget) {
-  print('💬 showBudgetDetailDialog called: ${budget.budgetName}');
+Future<void> showGoalDetailDialog(BuildContext context, GoalModel goal) {
   return showModalBottomSheet(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => BudgetDetailContent(budget: budget),
+    builder: (_) => GoalDetailContent(goal: goal),
   );
 }
 
-class BudgetDetailContent extends StatelessWidget {
-  final BudgetModel budget;
-  const BudgetDetailContent({super.key, required this.budget});
+class GoalDetailContent extends StatelessWidget {
+  final GoalModel goal;
+  const GoalDetailContent({super.key, required this.goal});
 
   @override
   Widget build(BuildContext context) {
-    final BudgetController budgetController = Get.find<BudgetController>();
+    final GoalController goalController = Get.find<GoalController>();
 
     return DraggableScrollableSheet(
       expand: false,
@@ -49,7 +47,7 @@ class BudgetDetailContent extends StatelessWidget {
                 children: [
                   Center(
                     child: Text(
-                      "Төсвийн дэлгэрэнгүй",
+                      "Зорилтын дэлгэрэнгүй",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -59,15 +57,16 @@ class BudgetDetailContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 25),
 
-                  _buildDetailRow("Нэр:", budget.budgetName),
-                  _buildDetailRow("Төлөв:", budget.statusLabel),
-                  _buildDetailRow("Нийт төсөв:", "${budget.amount.toStringAsFixed(2)}₮"),
-                  _buildDetailRow("Ашигласан:", "${budget.usedAmount.toStringAsFixed(2)}₮"),
-                  _buildDetailRow("Эхлэх огноо:", budget.startDate),
-                  _buildDetailRow("Дуусах огноо:", budget.dueDate),
-                  _buildDetailRow("Төлбөрийн огноо:", budget.payDueDate),
-                  _buildDetailRow("Тайлбар:", budget.description.isNotEmpty ? budget.description : "—"),
-                  _buildDetailRow("Хэтэвч:", budget.ownerType == 'Family' ? "Family Wallet" : "Private Wallet"),
+                  _buildDetailRow("Нэр:", goal.goalName),
+                  _buildDetailRow("Төрөл:", goal.goalType.capitalize ?? ''),
+                  _buildDetailRow("Статус:", goal.status.capitalize ?? ''),
+                  _buildDetailRow("Нийт зорилт:", "${goal.targetAmount.toStringAsFixed(2)}₮"),
+                  _buildDetailRow("Биелүүлсэн:", "${goal.paidAmount.toStringAsFixed(2)}₮"),
+                  _buildDetailRow("Үлдэгдэл:", "${goal.remainingAmount.toStringAsFixed(2)}₮"),
+                  _buildDetailRow("Эхлэх огноо:", DateFormat('yyyy-MM-dd').format(goal.startDate)),
+                  _buildDetailRow("Дуусах огноо:", DateFormat('yyyy-MM-dd').format(goal.expectedDate)),
+                  _buildDetailRow("Тайлбар:", goal.description.isNotEmpty ? goal.description : "—"),
+                  _buildDetailRow("Хэтэвч:", goal.ownerType == 'Family' ? "Family Wallet" : "Private Wallet"),
 
                   const SizedBox(height: 15),
 
@@ -76,14 +75,13 @@ class BudgetDetailContent extends StatelessWidget {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        // Устгах товч
                         TextButton.icon(
                           onPressed: () async {
                             final confirmed = await showDialog<bool>(
                               context: context,
                               builder: (ctx) => AlertDialog(
                                 title: const Text('Баталгаажуулах'),
-                                content: const Text('Энэ төсвийг устгах уу?'),
+                                content: const Text('Энэ зорилтыг устгах уу?'),
                                 actions: [
                                   TextButton(
                                     onPressed: () => Navigator.pop(ctx, false),
@@ -97,10 +95,10 @@ class BudgetDetailContent extends StatelessWidget {
                               ),
                             );
                             if (confirmed == true) {
-                              await budgetController.deleteBudget(budget.id);
+                              // await goalController.deleteGoal(goal.id);
                               Navigator.pop(context);
                               Get.snackbar(
-                                "Амжилттай", "Төсөв устгалаа",
+                                "Амжилттай", "Зорилт устгалаа",
                                 snackPosition: SnackPosition.BOTTOM,
                                 backgroundColor: Colors.greenAccent,
                               );
@@ -117,16 +115,10 @@ class BudgetDetailContent extends StatelessWidget {
                           ),
                         ),
 
-                        // Засах товч
                         TextButton.icon(
                           onPressed: () {
                             Navigator.pop(context);
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => AddBudgetView(editBudget: budget),
-                              ),
-                            );
+                            // ✨ Засах дэлгэц рүү орох бол энд navigation хийх
                           },
                           icon: const Icon(Icons.edit, color: Colors.blue),
                           label: const Text(
@@ -147,38 +139,36 @@ class BudgetDetailContent extends StatelessWidget {
               ),
             ),
 
-            // Дээр category icon
+            // 🟢 Дээр нь CATEGORY ICON тавина
             Positioned(
               top: -40,
               left: 0,
               right: 0,
               child: Center(
                 child: Stack(
-                  clipBehavior: Clip.none,
                   alignment: Alignment.center,
+                  clipBehavior: Clip.none,
                   children: [
-                    // Доод давхарга өнгөт сүүдэртэй
                     Container(
                       width: 85,
                       height: 85,
                       decoration: BoxDecoration(
-                        color: budget.category?.safeColor ?? Colors.grey,
+                        color: Colors.blueGrey,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: (budget.category?.safeColor ?? Colors.grey).withOpacity(0.6),
+                            color: Colors.blueGrey.withOpacity(0.6),
                             blurRadius: 10,
                             offset: const Offset(0, 2.5),
                           ),
                         ],
                       ),
                     ),
-                    // Дээд давхарга цагаан сүүдэртэй
                     Container(
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: budget.category?.safeColor ?? Colors.grey.shade300,
+                        color: Colors.blueGrey,
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
@@ -188,12 +178,8 @@ class BudgetDetailContent extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: Center(
-                        child: Icon(
-                          budget.category?.iconData ?? Icons.category,
-                          size: 40,
-                          color: Colors.white,
-                        ),
+                      child: const Center(
+                        child: Icon(Icons.flag_rounded, size: 40, color: Colors.white),
                       ),
                     ),
                   ],
@@ -225,5 +211,3 @@ class BudgetDetailContent extends StatelessWidget {
     );
   }
 }
-
-

@@ -1,5 +1,7 @@
+import 'package:budgetfrontend/controllers/auth_controller.dart';
 import 'package:budgetfrontend/views/user/profile_view.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class MainBarView extends StatelessWidget implements PreferredSizeWidget {
   final String title;
@@ -46,21 +48,19 @@ class MainBarView extends StatelessWidget implements PreferredSizeWidget {
               ),
               const SizedBox(width: 12),
               IconButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProfileView()),
-                  );
-                },
-                icon: Opacity(
-                  opacity: 0.6,
-                  child: Image.asset(
-                    "assets/img/profile.png",
-                    width: 37,
-                    height: 37,
-                  ),
-                ),
-              ),
+  onPressed: () {
+    Get.to(() => ProfileView());
+  },
+  icon: Obx(() {
+    final user = Get.find<AuthController>().user.value;
+    return CircleAvatar(
+      radius: 18,
+      backgroundImage: user?.profilePhotoUrl != null
+          ? NetworkImage(user!.profilePhotoUrl!)
+          : const AssetImage("assets/img/default_profile.png") as ImageProvider,
+    );
+  }),
+),
             ],
           ),
         ),

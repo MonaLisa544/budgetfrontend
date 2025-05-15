@@ -37,8 +37,8 @@ class BudgetSection extends StatelessWidget {
       iconColor: Colors.white,
       collapsedIconColor: Colors.white,
       childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
-      collapsedBackgroundColor: Colors.white.withOpacity(0.1),
-      backgroundColor: Colors.transparent,
+      collapsedBackgroundColor: Color.fromARGB(255, 66, 84, 128).withOpacity(0.3),
+      backgroundColor: const Color.fromARGB(255, 66, 84, 128).withOpacity(0.3),
       children: items.map(itemBuilder).toList(),
     );
   }

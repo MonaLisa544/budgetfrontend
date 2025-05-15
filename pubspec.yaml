@@ -27,6 +27,13 @@ dependencies:
   flutter_date_pickers: ^0.4.3
   carousel_slider: ^5.0.0
   image_picker: ^1.1.2
+  dio: ^5.8.0+1
+  flutter_svg: ^2.1.0
+  dropdown_button2: ^2.3.9
+  top_snackbar_flutter: ^3.2.0
+  onesignal_flutter: ^5.1.0
+
+
   
 
 dev_dependencies:

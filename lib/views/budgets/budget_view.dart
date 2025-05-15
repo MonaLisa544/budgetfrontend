@@ -1,58 +1,22 @@
-import 'package:budgetfrontend/views/budgets/add_budget_view.dart';
+import 'package:budgetfrontend/models/budget_model.dart';
 import 'package:budgetfrontend/views/budgets/budget_info_view.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:budgetfrontend/controllers/budget_controller.dart';
 import 'package:budgetfrontend/views/home/main_bar_view.dart';
-import 'package:budgetfrontend/widgets/budget_section.dart';
-import 'package:budgetfrontend/widgets/budgets_row.dart';
 import 'package:budgetfrontend/widgets/common/color_extension.dart';
 import 'package:budgetfrontend/widgets/dual_arc_painter.dart';
-import 'package:flutter/material.dart';
+import 'package:budgetfrontend/views/budgets/add_budget_view.dart';
 import 'dart:ui';
 
-class BudgetView extends StatefulWidget {
-  const BudgetView({super.key});
+class BudgetView extends StatelessWidget {
+  BudgetView({super.key});
 
-  @override
-  State<BudgetView> createState() => _BudgetViewState();
-}
-
-class _BudgetViewState extends State<BudgetView> {
+  final BudgetController budgetController = Get.put(BudgetController());
   DateTime selectedDate = DateTime.now();
-
-  List<Map<String, dynamic>> privateBudgets = [
-    {
-      "name": "Auto & Transport",
-      "icon": "assets/img/auto_&_transport.png",
-      "spend_amount": "25.99",
-      "total_budget": "400",
-      "left_amount": "250.01",
-      "color": TColor.secondaryG,
-    },
-    {
-      "name": "Entertainment",
-      "icon": "assets/img/entertainment.png",
-      "spend_amount": "50.99",
-      "total_budget": "600",
-      "left_amount": "300.01",
-      "color": TColor.secondary50,
-    },
-  ];
-
-  List<Map<String, dynamic>> familyBudgets = [
-    {
-      "name": "Security",
-      "icon": "assets/img/security.png",
-      "spend_amount": "5.99",
-      "total_budget": "600",
-      "left_amount": "250.01",
-      "color": TColor.primary10,
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final double total = 1000000;
-    final double used = 600000;
-    final double percentage = total == 0 ? 0 : used / total;
+   
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: MainBarView(
@@ -63,10 +27,10 @@ class _BudgetViewState extends State<BudgetView> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/background/background14.jpeg', fit: BoxFit.cover),
+          Image.asset('assets/background/background77.jpeg', fit: BoxFit.cover),
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 99, sigmaY: 50),
+              filter: ImageFilter.blur(sigmaX: 70, sigmaY: 20),
               child: Container(color: Colors.transparent),
             ),
           ),
@@ -85,92 +49,83 @@ class _BudgetViewState extends State<BudgetView> {
               ),
             ),
           ),
-          SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.only(top: 10, bottom: 50),
+          Obx(() {
+            if (budgetController.isLoading.value) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final privateBudgets = budgetController.budgets
+                .where((b) => b.ownerType == "User")
+                .toList();
+            final familyBudgets = budgetController.budgets
+                .where((b) => b.ownerType == "Family")
+                .toList();
+
+            final familyTotal = familyBudgets.fold<double>(0, (sum, b) => sum + b.amount);
+            final familyUsed = familyBudgets.fold<double>(0, (sum, b) => sum + b.usedAmount);
+            final privateTotal = privateBudgets.fold<double>(0, (sum, b) => sum + b.amount);
+            final privateUsed = privateBudgets.fold<double>(0, (sum, b) => sum + b.usedAmount);
+
+            return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-      //               decoration: BoxDecoration(
-      //   color: const Color.fromARGB(255, 226, 230, 238).withOpacity(0.2),
-      //   borderRadius: BorderRadius.circular(16),
-      //   //border: Border.all(color: Colors.white.withOpacity(0.2)),
-      // ),
-                    child: Column(
-                      
-                      children: [
-                        MonthYearSelector(
-                          selectedDate: selectedDate,
-                          onChanged: (newDate) {
-                            setState(() {
-                              selectedDate = newDate;
-                              // TODO: Энэ үед тухайн сарын төсвийг backend-ээс дахин ачааллаж болно
-                            });
-                          },
-                        ),
-                  //       BudgetSummaryCard(
-                  //   familyTotal: 1200000,
-                  //   familyUsed: 800000,
-                  //   privateTotal: 800000,
-                  //   privateUsed: 400000,
-                  // ),
-                      ],
-                    ),
-                    
+                  MonthYearSelector(
+                    selectedDate: selectedDate,
+                    onChanged: (newDate) {},
                   ),
-                  
-
-                  const SizedBox(height: 12),
-                BudgetSection(
-  title: '  Private',
-  leadingIcon: Icons.person,
-  items: privateBudgets,
-  itemBuilder: (bObj) => BudgetsRow(
-    bObj: bObj,
-    onPressed: () {
-      final transaction = {
-        "date": "2025-05-08",
-        "type": "Зарлага",
-        "amount": "25000",
-        "category_name": "Хоол хүнс",
-        "note": "Өдрийн хоол"
-      };
-      showBudgetInfoDialog(context, transaction);
-    },
-  ),
-),
-
-BudgetSection(
-  title: '  Family',
-  leadingIcon: Icons.group,
-  items: familyBudgets,
-  itemBuilder: (bObj) => BudgetsRow(
-    bObj: bObj,
-    onPressed: () {
-      // ...
-    },
-  ),
-),
                   Padding(
-                    padding: const EdgeInsets.all(25.0),
+                    padding: const EdgeInsets.all(16),
+                    child: BudgetSummaryCard(
+                      familyTotal: familyTotal,
+                      familyUsed: familyUsed,
+                      privateTotal: privateTotal,
+                      privateUsed: privateUsed,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  BudgetSection(
+                    title: 'Private',
+                    leadingIcon: Icons.person,
+                    items: privateBudgets,
+                    itemBuilder: (budget) => BudgetsRow(
+                      budget: budget,
+                      onPressed: () {
+  showBudgetDetailDialog(context, budget);
+},
+                    ),
+                  ),
+                  BudgetSection(
+                    title: 'Family',
+                    leadingIcon: Icons.group,
+                    items: familyBudgets,
+                    itemBuilder: (budget) => BudgetsRow(
+                      budget: budget,
+                      onPressed: () {
+  showBudgetDetailDialog(context, budget);
+},
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 25, right: 25, top: 25, bottom: 70),
                     child: AddCategoryDashedBox(
                       onTap: () {
-                        // category нэмэх логик эсвэл dialog/modal нээх
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AddBudgetView()),
+                        );
                       },
                     ),
                   ),
                 ],
               ),
-            ),
-          ),
+            );
+          }),
         ],
       ),
     );
   }
 }
-
-
 
 class MonthYearSelector extends StatelessWidget {
   final DateTime selectedDate;
@@ -334,6 +289,8 @@ class BudgetSummaryCard extends StatelessWidget {
     required this.privateTotal,
     required this.privateUsed,
   });
+  
+  get children => null;
 
   @override
   Widget build(BuildContext context) {
@@ -344,73 +301,54 @@ class BudgetSummaryCard extends StatelessWidget {
     final double familyPercent = maxTotal == 0 ? 0 : familyUsed / maxTotal;
     final double privatePercent = maxTotal == 0 ? 0 : privateUsed / maxTotal;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-      padding: const EdgeInsets.only(left: 13),
-      // decoration: BoxDecoration(
-      //   color: Colors.white.withOpacity(0.1),
-      //   borderRadius: BorderRadius.circular(16),
-      //   //border: Border.all(color: Colors.white.withOpacity(0.2)),
-      // ),
-      child: DualBudgetArc(
-            familyPercent: familyPercent,
-            privatePercent: privatePercent, )
-      //     ), Row(
-      //   children: [
-      //     DualBudgetArc(
-      //       familyPercent: familyPercent,
-      //       privatePercent: privatePercent,
-      //     ),
-      //     const SizedBox(width: 16),
-      //     // Expanded(
-      //     //   child: Column(
-      //     //     crossAxisAlignment: CrossAxisAlignment.start,
-      //     //     children: [
-      //     //       Row(
-      //     //         children: [
-      //     //           Icon(Icons.bar_chart, color: Colors.white),
-      //     //           const Text(
-      //     //             " Overview",
-      //     //             style: TextStyle(
-      //     //               color: Colors.white,
-      //     //               fontSize: 16,
-      //     //               fontWeight: FontWeight.bold,
-      //     //             ),
-      //     //           ),
-      //     //         ],
-      //     //       ),
-      //     //       const SizedBox(height: 8),
-      //     //       Column(
-      //     //         children: [
-      //     //           Text(
-      //     //             "Family total ",
-      //     //             style: const TextStyle(color: Colors.white, fontSize: 12),
-      //     //           ),
-      //     //           Text(
-      //     //              "      ${familyTotal.toStringAsFixed(0)}₮",
-      //     //         style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-      //     //       ),
-      //     //       SizedBox(height: 5),
-      //     //       Text(
-      //     //         "Private total ",
-      //     //         style: const TextStyle(color: Colors.white, fontSize: 12),
-      //     //       ),
-      //     //       Text(
-      //     //         "     ${privateTotal.toStringAsFixed(0)}₮",
-      //     //         style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-      //     //       ),
-      //     //         ],
-      //     //       ),
-               
-                
-      //     //     ],
-      //     //   ),
-      //     // ),
-      //   ],
-      // ),
+    return Row(
+      children: [
+        Container(
+        margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
+        padding: const EdgeInsets.only(left: 0),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(255, 66, 84, 128).withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          //border: Border.all(color: Colors.white.withOpacity(0.2)),
+        ),
+        child: DualBudgetArc(
+              familyPercent: familyPercent,
+              privatePercent: privatePercent, )
+         
+      ),
+      SizedBox(width: 30),
+      Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildStatusRow(Icons.check_circle_outline, "Active", Colors.greenAccent),
+                const SizedBox(height: 8),
+                _buildStatusRow(Icons.warning_amber_rounded, "Exceeded", Colors.redAccent),
+              ],
+            ),
+          ),
+
+      ] 
+    );
+  }
+   Widget _buildStatusRow(IconData icon, String label, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: color.withOpacity(0.7)),
+        const SizedBox(width: 8),
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.7),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        )
+      ],
     );
   }
 }
+
 class AddCategoryDashedBox extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -420,10 +358,7 @@ class AddCategoryDashedBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const AddBudgetView()),
-    );
+    	Get.to(() => AddBudgetView());
   },
       child: CustomPaint(
         painter: DashedBorderPainter(),
@@ -484,4 +419,150 @@ class DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+class BudgetsRow extends StatelessWidget {
+  final BudgetModel budget;
+  final VoidCallback onPressed;
+
+  const BudgetsRow({super.key, required this.budget, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    double leftAmount = budget.amount - budget.usedAmount;
+    double proVal = budget.amount == 0 ? 0 : leftAmount / budget.amount;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onPressed,
+        child: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: Colors.white.withOpacity(0.1),
+            ),
+            color: const Color.fromARGB(255, 30, 46, 70).withOpacity(0.2),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          alignment: Alignment.center,
+          child: Column(
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Icon(
+                      budget.category?.iconData ?? Icons.category, // 🔥
+                      size: 30,
+                      color: budget.category?.safeColor ?? TColor.gray10, // 🔥
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          budget.budgetName,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          "\$${leftAmount.toStringAsFixed(2)} left to spend",
+                          style: TextStyle(
+                              color: TColor.gray10,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                       Text(
+                        "\$${budget.amount.toStringAsFixed(2)}",
+                        style: TextStyle(
+                            color: TColor.gray10,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600),
+                      ),
+                      Text(
+                        "of \$${budget.usedAmount.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500),
+                      ),
+                     
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+             LinearProgressIndicator(
+  backgroundColor: TColor.gray60,
+  valueColor: AlwaysStoppedAnimation<Color>(
+    budget.category?.safeColor ?? Colors.blueAccent,
+  ),
+  minHeight: 3,
+  value: (1.0 - proVal).clamp(0.0, 1.0),
+)
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class BudgetSection extends StatelessWidget {
+  final String title;
+  final IconData? leadingIcon;
+  final List<BudgetModel> items;
+  final Widget Function(BudgetModel) itemBuilder; // ✅ Энд зөв BudgetModel
+
+  const BudgetSection({
+    super.key,
+    required this.title,
+    this.leadingIcon,
+    required this.items,
+    required this.itemBuilder,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ExpansionTile(
+      initiallyExpanded: true,
+      title: Row(
+        children: [
+          if (leadingIcon != null) ...[
+            Icon(leadingIcon, size: 18, color: Colors.white),
+            const SizedBox(width: 6),
+          ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
+      iconColor: Colors.white,
+      collapsedIconColor: Colors.white,
+      childrenPadding: const EdgeInsets.symmetric(horizontal: 16),
+      collapsedBackgroundColor: const Color.fromARGB(255, 66, 84, 128).withOpacity(0.3),
+      backgroundColor: const Color.fromARGB(255, 66, 84, 128).withOpacity(0.3),
+      children: items.map(itemBuilder).toList(),
+    );
+  }
 }

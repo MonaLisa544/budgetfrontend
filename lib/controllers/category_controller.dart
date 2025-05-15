@@ -35,11 +35,13 @@ class CategoryController extends GetxController {
     final newCategory = await ApiService.createCategory(category);
     if (newCategory != null) {
       categories.add(newCategory);
-      return true; // ✅ амжилттай
+      Get.snackbar('Амжилттай', 'Категори амжилттай нэмэгдлээ'); // ✅
+      return true;
     }
-    return false; // ✅ null бол амжилтгүй
-  } catch (e) {
     Get.snackbar('Алдаа', 'Категори үүсгэж чадсангүй');
+    return false;
+  } catch (e) {
+    Get.snackbar('Алдаа', 'Категори үүсгэхэд алдаа гарлаа');
     return false;
   } finally {
     isLoading.value = false;

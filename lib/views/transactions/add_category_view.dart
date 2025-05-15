@@ -7,7 +7,6 @@ import 'package:budgetfrontend/controllers/category_controller.dart';
 import 'package:budgetfrontend/models/category_model.dart';
 import 'package:budgetfrontend/views/home/back_app_bar.dart';
 import 'package:budgetfrontend/widgets/blue_field_text_theme.dart';
-import 'package:get/get_connect/http/src/utils/utils.dart'; // BlueTextFieldTheme import
 
 class AddCategoryView extends StatefulWidget {
   final bool isEdit;
@@ -62,15 +61,38 @@ class _AddCategoryViewState extends State<AddCategoryView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextFormField(
-                  controller: nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Name',
-                    border: OutlineInputBorder(),
-                  ),
-                  validator: (value) => value!.isEmpty ? 'Required' : null,
-                ),
-                const SizedBox(height: 16),
+              TextFormField(
+  controller: nameController,
+  keyboardType: TextInputType.text,
+  autofocus: true, // Name учраас number биш текст болгоно
+  decoration: InputDecoration(
+    labelText: 'Category Name',
+    contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+    labelStyle: const TextStyle(
+      color: Color.fromARGB(255, 131, 131, 131), fontWeight: FontWeight.w500
+    ),
+    floatingLabelStyle: const TextStyle(
+      color: Colors.grey,
+      fontWeight: FontWeight.bold,
+    ),
+    border: const UnderlineInputBorder(
+      borderSide: BorderSide(color: Colors.grey, width: 2),
+    ),
+    enabledBorder: const UnderlineInputBorder(
+      borderSide: BorderSide(color: Colors.grey, width: 2),
+    ),
+    focusedBorder: const UnderlineInputBorder(
+      borderSide: BorderSide(color: Colors.blue, width: 2),
+    ),
+  ),
+  validator: (value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Please enter name';
+    }
+    return null;
+  },
+),
+                const SizedBox(height: 25),
 
                 InkWell(
                   onTap: () async {
@@ -95,14 +117,20 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                   child: InputDecorator(
                     decoration: const InputDecoration(
                       labelText: 'Pick Icon',
-                      floatingLabelStyle: TextStyle(color: Colors.black87), 
+                      floatingLabelStyle: TextStyle(color: Color.fromARGB(221, 148, 148, 148),  fontWeight: FontWeight.bold), 
                       border: OutlineInputBorder(),
                     ),
                     child: Row(
                       children: [
                         Icon(selectedIcon ?? Icons.category, color: selectedIconColor),
                         const SizedBox(width: 10),
-                        Text(selectedIcon != null ? 'Icon Selected' : 'Choose an icon'),
+                        Text(
+  selectedIcon != null ? 'Icon Selected' : 'Choose an icon',
+  style: TextStyle(
+    color: selectedIcon != null ? Colors.black : Colors.grey, // 🎯 Өнгө сонголт
+    fontSize: 14,
+  ),
+),
                       ],
                     ),
                   ),
@@ -113,7 +141,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                   decoration: const InputDecoration(
                     labelText: 'Icon Color',
                     
-                    floatingLabelStyle: TextStyle(color: Colors.black87),
+                   floatingLabelStyle: TextStyle(color: Color.fromARGB(221, 148, 148, 148),  fontWeight: FontWeight.bold),
                     border: OutlineInputBorder(),
                   ),
                   child: Row(
@@ -128,63 +156,68 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                         ),
                       ),
                       const SizedBox(width: 10),
-                      TextButton(
-                        child: const Text('Pick Color', style: TextStyle(color: Colors.blue),),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => AlertDialog(
-                              title: const Text('Select Icon Color'),
-                              content: SingleChildScrollView(
-                                child: ColorPicker(
-                                  pickerColor: selectedIconColor,
-                                  onColorChanged: (color) =>
-                                      setState(() => selectedIconColor = color),
-                                ),
-                              ),
-                              actions: [
-                                TextButton(
-                                  child: const Text('Done'),
-                                  onPressed: () => Navigator.of(context).pop(),
-                                )
-                              ],
-                            ),
-                          );
-                        },
-                      ),
+                    TextButton(
+  child: Text(
+    'Pick Color',
+    style: TextStyle(color: selectedIconColor), // ✅ Сонгосон өнгө
+  ),
+  onPressed: () {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Select Icon Color'),
+        content: SingleChildScrollView(
+          child: ColorPicker(
+            pickerColor: selectedIconColor,
+            onColorChanged: (color) =>
+                setState(() => selectedIconColor = color),
+          ),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Done'),
+            onPressed: () => Navigator.of(context).pop(),
+          )
+        ],
+      ),
+    );
+  },
+),
+
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
 
-               DropdownButtonFormField<String>(
-  value: selectedType,
-  decoration: InputDecoration(
-    labelText: 'Type',
-    floatingLabelStyle: TextStyle(color: Colors.black87),
-    labelStyle: const TextStyle(color: Colors.black87),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(12),
+              Column(
+  crossAxisAlignment: CrossAxisAlignment.start,
+  children: [
+    Text("Category Type", style: TextStyle(fontSize: 14),),
+   
+    const SizedBox(height: 12),
+    Wrap(
+      spacing: 20,
+      children: types.map((type) {
+        return CustomRadioButton(
+          label: type[0].toUpperCase() + type.substring(1).toLowerCase(),
+          value: type,
+          groupValue: selectedType,
+          onChanged: (value) {
+            setState(() {
+              selectedType = value!;
+            });
+          },
+        );
+      }).toList(),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-  ),
-  icon: const Icon(Icons.keyboard_arrow_down_rounded),
-  borderRadius: BorderRadius.circular(16),
-  dropdownColor: Colors.white,
-  isExpanded: true, // ✅ өргөн TextField-тэй тэнцүү болно
-  elevation: 4,
-  items: types.map((e) {
-    return DropdownMenuItem<String>(
-      value: e,
-      child: Text(e.toUpperCase(), style: const TextStyle(fontSize: 16)),
-    );
-  }).toList(),
-  onChanged: (value) => setState(() => selectedType = value!),
+  ],
 ),
 
 
 
-                const SizedBox(height: 24),
+
+
+                const SizedBox(height: 30),
 
                 ElevatedButton(
                   onPressed: saveCategory,
@@ -239,3 +272,62 @@ class _AddCategoryViewState extends State<AddCategoryView> {
     }
   }
 }
+
+class CustomRadioButton extends StatelessWidget {
+  final String label;
+  final String value;
+  final String groupValue;
+  final ValueChanged<String?> onChanged;
+
+  const CustomRadioButton({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.groupValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = value == groupValue;
+
+    return InkWell(
+      onTap: () => onChanged(value),
+      borderRadius: BorderRadius.circular(20),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeInOut,
+            width: 22,
+            height: 22,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isSelected ? Colors.blue : Colors.grey.shade400,
+                width: 2,
+              ),
+              color: isSelected ? Colors.blue : const Color.fromARGB(255, 255, 255, 255), // 🎯
+            ),
+            child: isSelected
+                ? const Center(
+                    child: Icon(Icons.check, size: 14, color: Colors.white),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal, // 🎯
+              color: isSelected ? Colors.blue : Colors.grey.shade600, // 🎯
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+

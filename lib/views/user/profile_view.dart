@@ -1,6 +1,11 @@
 import 'dart:ui';
+import 'package:budgetfrontend/controllers/auth_controller.dart';
 import 'package:budgetfrontend/views/home/back_app_bar.dart';
+import 'package:budgetfrontend/views/transactions/category_view.dart';
+import 'package:budgetfrontend/views/user/edit_profile.dart';
+import 'package:budgetfrontend/views/user/family_view.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class ProfileView extends StatefulWidget {
   const ProfileView({super.key});
@@ -10,23 +15,20 @@ class ProfileView extends StatefulWidget {
 }
 
 class _ProfileViewState extends State<ProfileView> {
+  final AuthController authController = Get.find();
+
   @override
   Widget build(BuildContext context) {
     var media = MediaQuery.of(context).size;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Color.fromARGB(255, 235, 245, 255),
       appBar: BackAppBar(title: 'Profile'),
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset('assets/background/background14.jpeg', fit: BoxFit.cover),
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 80, sigmaY: 50),
-              child: Container(color: Colors.transparent),
-            ),
-          ),
+          SizedBox(height: 20),
+          Image.asset('assets/icon/background15.jpg', fit: BoxFit.cover),
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -34,8 +36,8 @@ class _ProfileViewState extends State<ProfileView> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
+                    Color.fromARGB(255, 235, 245, 255),
                     Colors.transparent,
-                    Color.fromARGB(255, 57, 186, 196),
                   ],
                   stops: [0.5, 1.0],
                 ),
@@ -47,40 +49,70 @@ class _ProfileViewState extends State<ProfileView> {
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
               child: Column(
                 children: [
+                  SizedBox(height: 20),
                   Stack(
                     alignment: Alignment.bottomRight,
                     children: [
-                      const CircleAvatar(
-                        radius: 45,
-                        backgroundImage: NetworkImage(
-                          'https://i.pravatar.cc/150?img=10',
-                        ),
-                      ),
-                      CircleAvatar(
-                        backgroundColor: Colors.blue,
-                        radius: 14,
-                        child: const Icon(
-                          Icons.edit,
-                          size: 14,
-                          color: Colors.white,
-                        ),
-                      ),
+                      Obx(() {
+  final user = authController.user.value;
+  return Container(
+    width: 100,
+    height: 100,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      border: Border.all(
+        color: const Color.fromARGB(255, 113, 145, 192),
+        width: 3,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: const Color.fromARGB(255, 80, 133, 247).withOpacity(0.5),
+          spreadRadius: 2,
+          blurRadius: 10,
+          offset: const Offset(0, 4),
+        ),
+      ],
+    ),
+    child: CircleAvatar(
+      radius: 45,
+      backgroundColor: Colors.white,
+      backgroundImage: user?.profilePhotoUrl != null
+          ? NetworkImage(user!.profilePhotoUrl!)
+          : const AssetImage('assets/img/default_profile.png') as ImageProvider,
+    ),
+  );
+}),
+                      // CircleAvatar(
+                      //   backgroundColor: Colors.blue,
+                      //   radius: 14,
+                      //   child: const Icon(
+                      //     Icons.edit,
+                      //     size: 14,
+                      //     color: Colors.white,
+                      //   ),
+                      // ),
                     ],
                   ),
                   const SizedBox(height: 10),
-                  const Text(
-                    'Lloyd Haynes',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Obx(() {
+                    final user = authController.user.value;
+                    return Text(
+                      user != null ? '${user.firstName} ${user.lastName}' : '',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color.fromARGB(255, 0, 0, 0),
+                      ),
+                    );
+                  }),
                   const SizedBox(height: 4),
-                  const Text(
-                    'callie_parisian@rosenbaum.ca',
-                    style: TextStyle(color: Color.fromARGB(255, 230, 229, 229)),
-                  ),
+                  Obx(() {
+                    final user = authController.user.value;
+                    return Text(
+                      user?.email ?? '',
+                      style: const TextStyle(color: Color.fromARGB(255, 66, 66, 66)),
+                    );
+                  }),
                   const SizedBox(height: 20),
                   Container(
                     decoration: BoxDecoration(
@@ -90,7 +122,7 @@ class _ProfileViewState extends State<ProfileView> {
                         BoxShadow(
                           color: Colors.black12,
                           blurRadius: 8,
-                          offset: Offset(0, 4),
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
@@ -99,36 +131,57 @@ class _ProfileViewState extends State<ProfileView> {
                         _ProfileTile(
                           icon: Icons.person_outline,
                           text: 'Account',
+                          onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => EditProfileView()),
+    );
+  },
                         ),
-                        Divider(height: 1),
+                        const Divider(height: 1),
                         _ProfileTile(
                           icon: Icons.folder_copy,
-                          text: 'My projects',
+                          text: 'Categories',
+                           onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => CategoryManagePage()),
+    );
+  },
                         ),
-                        Divider(height: 1),
-                        
+                        const Divider(height: 1),
                         _ProfileTile(
                           icon: Icons.share,
-                          text: 'Share with friends',
+                          text: 'Manage family',
+                           onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => FamilyScreen()),
+    );
+  },
                         ),
-                        Divider(height: 1),
-                        _ProfileTile(icon: Icons.star_border, text: 'Review'),
-                        Divider(height: 1),
-                        _ProfileTile(icon: Icons.info_outline, text: 'Info'),
-                        Divider(height: 1),
-
+                        const Divider(height: 1),
+                        _ProfileTile(
+                          icon: Icons.star_border,
+                          text: 'Review',
+                        ),
+                        const Divider(height: 1),
+                        _ProfileTile(
+                          icon: Icons.info_outline,
+                          text: 'Info',
+                        ),
+                        const Divider(height: 1),
                         ListTile(
-                          leading: Icon(Icons.logout, color: Colors.red),
-                          title: Text(
+                          leading: const Icon(Icons.logout, color: Colors.red),
+                          title: const Text(
                             'Log out',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               color: Colors.red,
                             ),
                           ),
-                          // trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                          onTap: () {
-                            // Handle tap action here
+                          onTap: () async {
+                            await authController.logout();
                           },
                         ),
                       ],
@@ -147,9 +200,10 @@ class _ProfileViewState extends State<ProfileView> {
 class _ProfileTile extends StatelessWidget {
   final IconData icon;
   final String text;
+  final VoidCallback? onTap; // ✅ Нэмнэ!
 
-  const _ProfileTile({Key? key, required this.icon, required this.text})
-    : super(key: key);
+  const _ProfileTile({Key? key, required this.icon, required this.text, this.onTap})
+      : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -157,9 +211,7 @@ class _ProfileTile extends StatelessWidget {
       leading: Icon(icon, color: Colors.black87),
       title: Text(text, style: const TextStyle(fontSize: 16)),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-      onTap: () {
-        // Handle tap action here
-      },
+      onTap: onTap, // ✅ Нэмж өгнө
     );
   }
 }

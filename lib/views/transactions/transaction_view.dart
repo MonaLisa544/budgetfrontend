@@ -2,11 +2,9 @@ import 'dart:ui';
 import 'package:budgetfrontend/models/category_model.dart';
 import 'package:budgetfrontend/models/transaction_model.dart';
 import 'package:budgetfrontend/views/home/main_bar_view.dart';
-import 'dart:ui';
-import 'package:budgetfrontend/models/category_model.dart';
-import 'package:budgetfrontend/models/transaction_model.dart';
 import 'package:budgetfrontend/views/transactions/add_transaction_view.dart';
 import 'package:budgetfrontend/views/transactions/category_selecter_dialog.dart';
+import 'package:budgetfrontend/views/transactions/transaction_info_view.dart';
 import 'package:budgetfrontend/widgets/transaction_item.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -85,13 +83,7 @@ class _TransactionViewState extends State<TransactionView> {
                     heroTag: 'income',
                     onPressed: () {
                       setState(() => _isAddedTransaction = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => AddTransactionView(type: 'income'),
-                        ),
-                      );
+                     Get.to(() => AddTransactionView(type: 'income'));
                     },
                     backgroundColor: Colors.lightBlue.shade100,
                     icon: Icon(Icons.trending_up, color: Colors.green),
@@ -107,13 +99,7 @@ class _TransactionViewState extends State<TransactionView> {
                     heroTag: 'expense',
                     onPressed: () {
                       setState(() => _isAddedTransaction = false);
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder:
-                              (context) => AddTransactionView(type: 'expense'),
-                        ),
-                      );
+                      Get.to(() => AddTransactionView(type: 'expense'));
                     },
                     backgroundColor: Colors.lightBlue.shade100,
                     icon: Icon(Icons.trending_down, color: Colors.red),
@@ -141,25 +127,28 @@ class _TransactionViewState extends State<TransactionView> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.asset('assets/background/background14.jpeg', fit: BoxFit.cover),
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 99, sigmaY: 50),
-            child: Container(color: Colors.transparent),
+         Image.asset('assets/background/background77.jpeg', fit: BoxFit.cover),
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 20),
+              child: Container(color: Colors.transparent),
+            ),
           ),
-        ),
-        Positioned.fill(
-          child: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.transparent, Color.fromARGB(255, 57, 186, 196)],
-                stops: [0.5, 1.0],
+          Positioned.fill(
+            child: Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.transparent,
+                    Color.fromARGB(255, 57, 186, 196),
+                  ],
+                  stops: [0.5, 1.0],
+                ),
               ),
             ),
           ),
-        ),
         SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -168,24 +157,35 @@ class _TransactionViewState extends State<TransactionView> {
                 vertical: 10.0,
               ),
               child: Obx(() {
-                
-                     final transactions = transactionController.transactions.where((txn) {
-  // ✅ Wallet filter
-  if (selectedWallet == 'Private Wallet' && txn.walletType != 'private') return false;
-  if (selectedWallet == 'Family Wallet' && txn.walletType != 'family') return false;
+                final transactions =
+                    transactionController.transactions.where((txn) {
+                      // ✅ Wallet filter
+                      if (selectedWallet == 'Private Wallet' &&
+                          txn.walletType != 'private')
+                        return false;
+                      if (selectedWallet == 'Family Wallet' &&
+                          txn.walletType != 'family')
+                        return false;
 
-  // ✅ Date filter
-  if (selectedDate != null &&
-      DateFormat('yyyy-MM-dd').format(DateTime.parse(txn.transactionDate)) !=
-          DateFormat('yyyy-MM-dd').format(selectedDate!)) return false;
+                      // ✅ Date filter
+                      if (selectedDate != null &&
+                          DateFormat(
+                                'yyyy-MM-dd',
+                              ).format(DateTime.parse(txn.transactionDate)) !=
+                              DateFormat('yyyy-MM-dd').format(selectedDate!))
+                        return false;
 
-  // ✅ Income / Expense / All filter
-  if (selectedType == 'Income' && txn.transactionType != 'income') return false;
-  if (selectedType == 'Expense' && txn.transactionType != 'expense') return false;
-  
-  // selectedType == 'All' бол шалгахгүй
-  return true;
-}).toList();
+                      // ✅ Income / Expense / All filter
+                      if (selectedType == 'Income' &&
+                          txn.transactionType != 'income')
+                        return false;
+                      if (selectedType == 'Expense' &&
+                          txn.transactionType != 'expense')
+                        return false;
+
+                      // selectedType == 'All' бол шалгахгүй
+                      return true;
+                    }).toList();
 
                 final balances = calculateBalances(
                   transactionController.transactions,
@@ -217,15 +217,25 @@ class _TransactionViewState extends State<TransactionView> {
                           //balanceDisplay(balances),
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 174, 192, 226).withOpacity(0.2),
+                              color: const Color.fromARGB(
+                                255,
+                                174,
+                                192,
+                                226,
+                              ).withOpacity(0.2),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
-            BoxShadow(
-              color: Color.fromARGB(255, 255, 255, 255).withOpacity(0.9),
-              blurRadius: 1,
-              offset: Offset(0, 0),
-            ),
-          ],
+                                BoxShadow(
+                                  color: Color.fromARGB(
+                                    255,
+                                    255,
+                                    255,
+                                    255,
+                                  ).withOpacity(0.9),
+                                  blurRadius: 1,
+                                  offset: Offset(0, 0),
+                                ),
+                              ],
                               // border: Border.all(
                               //   color: Colors.white.withOpacity(0.2),
                               // ),
@@ -233,72 +243,90 @@ class _TransactionViewState extends State<TransactionView> {
                             child: Column(
                               children: [
                                 TextButton.icon(
-                            icon: const Icon(
-                              Icons.calendar_month,
-                              color: Color.fromARGB(255, 158, 162, 177),
-                            ),
-                            label: Text(
-                              startDate != null && endDate != null
-                                  ? "${DateFormat('yyyy-MM-dd').format(startDate!)} → ${DateFormat('yyyy-MM-dd').format(endDate!)}"
-                                  : "🗓️ Хугацаа сонгох",
-                              style: const TextStyle(color: Color.fromARGB(255, 158, 162, 177)),
-                            ),
-                            onPressed: () async {
-                              final picked = await showDialog<List<DateTime>>(
-                                context: context,
-                                builder:
-                                    (context) => TimelineDateRangeDialog(
-                                      initialStart: startDate,
-                                      initialEnd: endDate,
+                                  icon: const Icon(
+                                    Icons.calendar_month,
+                                    color: Color.fromARGB(255, 158, 162, 177),
+                                  ),
+                                  label: Text(
+                                    startDate != null && endDate != null
+                                        ? "${DateFormat('yyyy-MM-dd').format(startDate!)} → ${DateFormat('yyyy-MM-dd').format(endDate!)}"
+                                        : "🗓️ Хугацаа сонгох",
+                                    style: const TextStyle(
+                                      color: Color.fromARGB(255, 158, 162, 177),
                                     ),
-                              );
-                              if (picked != null && picked.length == 2) {
-                                setState(() {
-                                  startDate = picked[0];
-                                  endDate = picked[1];
-                                });
-                              }
-                            },
-                          ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              SizedBox(width: 10),
-                              TextButton.icon(
-                                icon: const Icon(Icons.category, color: Color.fromARGB(255, 158, 162, 177)),
-                                label: Text(
-                                  selectedCategory?.categoryName ??
-                                      'Ангилал сонгох',
-                                  style: const TextStyle(color: Color.fromARGB(255, 158, 162, 177)),
+                                  ),
+                                  onPressed: () async {
+                                    final picked =
+                                        await showDialog<List<DateTime>>(
+                                          context: context,
+                                          builder:
+                                              (context) =>
+                                                  TimelineDateRangeDialog(
+                                                    initialStart: startDate,
+                                                    initialEnd: endDate,
+                                                  ),
+                                        );
+                                    if (picked != null && picked.length == 2) {
+                                      setState(() {
+                                        startDate = picked[0];
+                                        endDate = picked[1];
+                                      });
+                                    }
+                                  },
                                 ),
-                                onPressed: () async {
-                                  final selected =
-                                      await showCategorySelectorDialogByType(
-                                        context: context,
-                                        type: selectedType.toLowerCase(),
-                                        selectedCategory: selectedCategory,
-                                      );
-                                  if (selected != null) {
-                                    setState(() => selectedCategory = selected);
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                          walletSummary(balances),
-                          SizedBox(height: 10),
-                          filterChips(),
-                          SizedBox(height: 10),
-                          
-
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.start,
+                                  children: [
+                                    SizedBox(width: 10),
+                                    TextButton.icon(
+                                      icon: const Icon(
+                                        Icons.category,
+                                        color: Color.fromARGB(
+                                          255,
+                                          158,
+                                          162,
+                                          177,
+                                        ),
+                                      ),
+                                      label: Text(
+                                        selectedCategory?.categoryName ??
+                                            'Ангилал сонгох',
+                                        style: const TextStyle(
+                                          color: Color.fromARGB(
+                                            255,
+                                            158,
+                                            162,
+                                            177,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        final selected =
+                                            await showCategorySelectorDialogByType(
+                                              context: context,
+                                              type: selectedType.toLowerCase(),
+                                              selectedCategory:
+                                                  selectedCategory,
+                                            );
+                                        if (selected != null) {
+                                          setState(
+                                            () => selectedCategory = selected,
+                                          );
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                ),
+                                walletSummary(balances),
+                                SizedBox(height: 10),
+                                filterChips(),
+                                SizedBox(height: 10),
                               ],
-                            )
+                            ),
                           ),
                           SizedBox(height: 10),
-                          
-                          
+
                           transactionList(transactions),
-                          
                         ],
                       ),
                     ),
@@ -376,7 +404,10 @@ class _TransactionViewState extends State<TransactionView> {
               SizedBox(width: 4),
               Text(
                 label,
-                style: TextStyle(color: Color.fromARGB(255, 158, 162, 177), fontSize: 12),
+                style: TextStyle(
+                  color: Color.fromARGB(255, 158, 162, 177),
+                  fontSize: 12,
+                ),
               ),
             ],
           ),
@@ -433,7 +464,12 @@ class _TransactionViewState extends State<TransactionView> {
                   ),
                   selected: selectedType == type,
                   selectedColor: Colors.blue,
-                  backgroundColor: const Color.fromARGB(255, 139, 144, 160).withOpacity(0.8),
+                  backgroundColor: const Color.fromARGB(
+                    255,
+                    139,
+                    144,
+                    160,
+                  ).withOpacity(0.8),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -470,7 +506,10 @@ class _TransactionViewState extends State<TransactionView> {
           children: [
             // 🗓️ Огнооны гарчиг
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16),
+              padding: const EdgeInsets.symmetric(
+                vertical: 8.0,
+                horizontal: 16,
+              ),
               child: Text(
                 date,
                 style: const TextStyle(
@@ -480,24 +519,29 @@ class _TransactionViewState extends State<TransactionView> {
                 ),
               ),
             ),
+
             // 💳 Тухайн өдрийн гүйлгээнүүд
             ...txnList.map((txn) {
               final isIncome = txn.transactionType == 'income';
               final amountText = (isIncome ? '+' : '-') +
                   "\$${txn.transactionAmount.toStringAsFixed(2)}";
-              final icon = getWalletIcon(txn.walletType);
-              final walletName = getWalletName(txn.walletType);
-              final dateStr = DateFormat('HH:mm').format(DateTime.parse(txn.transactionDate)); // 🕓 цагаар форматлав
+
+              final dateStr = txn.transactionDate;
 
               return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 12.0),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 1.0,
+                  horizontal: 0.0,
+                ),
                 child: TransactionItem(
-                  icon: icon,
-                  title: txn.transactionName,
-                  subtitle: walletName,
+                  iconData: txn.category?.iconData ?? Icons.category,
+                  iconColor: txn.category?.safeColor ?? Colors.grey,
+                  title: txn.category?.categoryName ?? txn.transactionName,
+                  subtitle: txn.transactionName,
                   amount: amountText,
-                  time: dateStr,
+                  // time: dateStr,
                   onPressed: () {
+                      showTransactionDetailDialog(context, txn);
                     print('Item clicked: ${txn.transactionName}');
                   },
                 ),
@@ -510,22 +554,25 @@ class _TransactionViewState extends State<TransactionView> {
   );
 }
 
-Map<String, List<TransactionModel>> groupTransactionsByDate(List<TransactionModel> transactions) {
-  Map<String, List<TransactionModel>> grouped = {};
+  Map<String, List<TransactionModel>> groupTransactionsByDate(
+    List<TransactionModel> transactions,
+  ) {
+    Map<String, List<TransactionModel>> grouped = {};
 
-  for (var txn in transactions) {
-    final date = DateFormat('yyyy-MM-dd').format(DateTime.parse(txn.transactionDate)); // ✅ parse хийж байна
-    if (!grouped.containsKey(date)) {
-      grouped[date] = [];
+    for (var txn in transactions) {
+      final date = DateFormat(
+        'yyyy-MM-dd',
+      ).format(DateTime.parse(txn.transactionDate)); // ✅ parse хийж байна
+      if (!grouped.containsKey(date)) {
+        grouped[date] = [];
+      }
+      grouped[date]!.add(txn);
     }
-    grouped[date]!.add(txn);
+
+    return grouped;
   }
 
-  return grouped;
-}
-
-
-   Map<String, double> calculateBalances(List<TransactionModel> transactions) {
+  Map<String, double> calculateBalances(List<TransactionModel> transactions) {
     double familyBalance = 0.0;
     double privateBalance = 0.0;
     for (var txn in transactions) {

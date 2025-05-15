@@ -1,3 +1,7 @@
+import 'dart:ui';
+
+import 'package:budgetfrontend/models/category_model.dart';
+
 class TransactionModel {
   final int? id;
   final String transactionName;
@@ -8,6 +12,8 @@ class TransactionModel {
   final String? walletType;
   final String? transactionType;
 
+  final CategoryModel? category; // 🔥 нэмэгдсэн хэсэг!
+
   TransactionModel({
     this.id,
     required this.transactionName,
@@ -17,6 +23,7 @@ class TransactionModel {
     required this.categoryId,
     this.walletType,
     this.transactionType,
+    this.category,
   });
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) {
@@ -29,6 +36,16 @@ class TransactionModel {
       categoryId: json['category_id'],
       walletType: json['wallet_type'],
       transactionType: json['transaction_type'],
+      category: (json['category_name'] != null)
+          ? CategoryModel(
+              categoryName: json['category_name'],
+              icon: json['category_icon'],
+              transactionType: json['transaction_type'] ?? '',
+              iconColor: json['category_icon_color'] != null
+                  ? Color(int.parse(json['category_icon_color'].replaceFirst('#', '0xff')))
+                  : null,
+            )
+          : null,
     );
   }
 

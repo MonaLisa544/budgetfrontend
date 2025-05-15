@@ -1,95 +1,110 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class TransactionItem extends StatelessWidget {
-  final IconData icon;
+  final IconData iconData;
+  final Color iconColor;
   final String title;
   final String subtitle;
   final String amount;
-  final String time;
-  final VoidCallback? onPressed; // ⬅️ товч дарах үед хийх үйлдэл
+  // final String time;
+  final VoidCallback? onPressed;
 
   const TransactionItem({
     super.key,
-    required this.icon,
+    required this.iconData,
+    required this.iconColor,
     required this.title,
     required this.subtitle,
     required this.amount,
-    required this.time,
+    // required this.time,
     this.onPressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed, // ⬅️ бүхэлдээ товч шиг ажиллана
-      child: _BlurredCard(
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-          leading: CircleAvatar(
-            backgroundColor: Colors.blueAccent,
-            child: Icon(icon, color: Colors.white, size: 20),
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          subtitle: Text(
-            subtitle,
-            style: const TextStyle(
-              color: Colors.white70,
-              fontSize: 12,
-            ),
-          ),
-          trailing: Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                amount,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+    return InkWell(
+      onTap: onPressed,
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+            child: Row(
+              children: [
+                Container(
+  width: 40,
+  height: 40,
+  decoration: BoxDecoration(
+    shape: BoxShape.circle,
+    color: const Color.fromARGB(255, 246, 251, 255),
+    boxShadow: [
+      BoxShadow(
+        color: iconColor.withOpacity(0.4), // Иконы өнгөтэй glow
+        blurRadius: 8,
+        spreadRadius: 2,
+        offset: const Offset(0, 3),
+      ),
+    ],
+  ),
+  child: Center(
+    child: Icon(iconData, color: iconColor, size: 22),
+  ),
+),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white, // ⬅️ Бүх текстүүд цагаан
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: const TextStyle(
+                          color: Colors.white70, // ⬅️ Subtitle цайвар цагаан
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Text(
-                time,
-                style: const TextStyle(fontSize: 12, color: Colors.white70),
-              ),
-            ],
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      amount,
+                      style: const TextStyle(
+                        color: Colors.white, // ⬅️ Amount цагаан
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    // Text(
+                    //   time,
+                    //   style: const TextStyle(
+                    //     color: Colors.white70, // ⬅️ Time цайвар цагаан
+                    //     fontSize: 12,
+                    //   ),
+                    // ),
+                  ],
+                ),
+              ],
+            ),
           ),
-        ),
+          const Divider(
+            color: Colors.white24, // ⬅️ Divider-г цагаандуу болгоно
+            height: 1,
+            thickness: 0.8,
+            indent: 16,
+            endIndent: 16,
+          ),
+        ],
       ),
     );
   }
 }
-
-
-class _BlurredCard extends StatelessWidget {
-  final Widget child;
-  const _BlurredCard({required this.child});
-
-  @override
-  Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(0),
-          decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.2)),
-          ),
-          child: child,
-        ),
-      ),
-    );
-  }
-}
-
