@@ -20,13 +20,14 @@ class TransactionView extends StatefulWidget {
 }
 
 class _TransactionViewState extends State<TransactionView> {
-  String selectedType = 'All';
-  String selectedWallet = 'Private Wallet';
+  String selectedType = 'Бүгд';
+  String selectedWallet = 'Хувийн гүйлгээ';
   DateTime? selectedDate;
   bool _isAddedTransaction = false;
   CategoryModel? selectedCategory;
 
-  final transactionController = Get.put(TransactionController());
+  final transactionController = Get.find<TransactionController>();
+
   DateTime? startDate;
   DateTime? endDate;
 
@@ -45,9 +46,10 @@ class _TransactionViewState extends State<TransactionView> {
         Scaffold(
           backgroundColor: Colors.white,
           appBar: MainBarView(
-            title: 'Transactions',
+            title: 'Гүйлгээ',
             onNotfPressed: () {},
             onProfilePressed: () {},
+            showChartIcon: true,
           ),
           floatingActionButton: FloatingActionButton(
             heroTag: 'main',
@@ -83,12 +85,12 @@ class _TransactionViewState extends State<TransactionView> {
                     heroTag: 'income',
                     onPressed: () {
                       setState(() => _isAddedTransaction = false);
-                     Get.to(() => AddTransactionView(type: 'income'));
+                      Get.to(() => AddTransactionView(type: 'income'));
                     },
                     backgroundColor: Colors.lightBlue.shade100,
                     icon: Icon(Icons.trending_up, color: Colors.green),
                     label: const Text(
-                      'Income',
+                      'Орлого',
                       style: TextStyle(color: Colors.black),
                     ),
                   ),
@@ -104,7 +106,7 @@ class _TransactionViewState extends State<TransactionView> {
                     backgroundColor: Colors.lightBlue.shade100,
                     icon: Icon(Icons.trending_down, color: Colors.red),
                     label: const Text(
-                      'Expense',
+                      'Зарлага',
                       style: TextStyle(color: Colors.black),
                     ),
                   ),
@@ -127,28 +129,28 @@ class _TransactionViewState extends State<TransactionView> {
     return Stack(
       fit: StackFit.expand,
       children: [
-         Image.asset('assets/background/background77.jpeg', fit: BoxFit.cover),
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 30, sigmaY: 20),
-              child: Container(color: Colors.transparent),
-            ),
+        Image.asset('assets/background/background77.jpeg', fit: BoxFit.cover),
+        Positioned.fill(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 30, sigmaY: 20),
+            child: Container(color: Colors.transparent),
           ),
-          Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Color.fromARGB(255, 57, 186, 196),
-                  ],
-                  stops: [0.5, 1.0],
-                ),
+        ),
+        Positioned.fill(
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Colors.transparent,
+                  Color.fromARGB(255, 57, 186, 196),
+                ],
+                stops: [0.5, 1.0],
               ),
             ),
           ),
+        ),
         SafeArea(
           child: SingleChildScrollView(
             child: Padding(
@@ -159,33 +161,31 @@ class _TransactionViewState extends State<TransactionView> {
               child: Obx(() {
                 final transactions =
                     transactionController.transactions.where((txn) {
-                      // ✅ Wallet filter
-                      if (selectedWallet == 'Private Wallet' &&
-                          txn.walletType != 'private')
-                        return false;
-                      if (selectedWallet == 'Family Wallet' &&
-                          txn.walletType != 'family')
-                        return false;
+                  // ✅ Wallet filter
+                  if (selectedWallet == 'Хувийн гүйлгээ' &&
+                      txn.walletType != 'private') return false;
+                  if (selectedWallet == 'Гэр бүлийн гүйлгээ' &&
+                      txn.walletType != 'family') return false;
 
-                      // ✅ Date filter
-                      if (selectedDate != null &&
-                          DateFormat(
-                                'yyyy-MM-dd',
-                              ).format(DateTime.parse(txn.transactionDate)) !=
-                              DateFormat('yyyy-MM-dd').format(selectedDate!))
-                        return false;
+                  // ✅ Date filter
+                  if (selectedDate != null &&
+                      DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(DateTime.parse(txn.transactionDate)) !=
+                          DateFormat('yyyy-MM-dd').format(selectedDate!)) {
+                    return false;
+                  }
 
-                      // ✅ Income / Expense / All filter
-                      if (selectedType == 'Income' &&
-                          txn.transactionType != 'income')
-                        return false;
-                      if (selectedType == 'Expense' &&
-                          txn.transactionType != 'expense')
-                        return false;
-
-                      // selectedType == 'All' бол шалгахгүй
-                      return true;
-                    }).toList();
+                  // ✅ Income / Expense / All filter
+                  if (selectedType == 'Орлого' && txn.transactionType != 'income') {
+                    return false;
+                  }
+                  if (selectedType == 'Зарлага' && txn.transactionType != 'expense') {
+                    return false;
+                  }
+                  // selectedType == 'Бүгд' бол шалгахгүй
+                  return true;
+                }).toList();
 
                 final balances = calculateBalances(
                   transactionController.transactions,
@@ -203,129 +203,142 @@ class _TransactionViewState extends State<TransactionView> {
                             labelColor: Colors.white,
                             unselectedLabelColor: Colors.white60,
                             tabs: const [
-                              Tab(text: "Private Wallet"),
-                              Tab(text: "Family Wallet"),
+                              Tab(text: "Хувийн гүйлгээ"),
+                              Tab(text: "Гэр бүлийн гүйлгээ"),
                             ],
                             onTap: (index) {
                               setState(() {
                                 selectedWallet =
-                                    ['Private Wallet', 'Family Wallet'][index];
+                                    ['Хувийн гүйлгээ', 'Гэр бүлийн гүйлгээ'][index];
                               });
                             },
                           ),
                           SizedBox(height: 12),
-                          //balanceDisplay(balances),
                           Container(
                             decoration: BoxDecoration(
-                              color: const Color.fromARGB(
-                                255,
-                                174,
-                                192,
-                                226,
-                              ).withOpacity(0.2),
+                              color: Colors.white.withOpacity(0.05),
                               borderRadius: BorderRadius.circular(16),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Color.fromARGB(
-                                    255,
-                                    255,
-                                    255,
-                                    255,
-                                  ).withOpacity(0.9),
-                                  blurRadius: 1,
-                                  offset: Offset(0, 0),
+                                  color: Colors.white.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: Offset(0, 3),
                                 ),
                               ],
-                              // border: Border.all(
-                              //   color: Colors.white.withOpacity(0.2),
-                              // ),
                             ),
-                            child: Column(
-                              children: [
-                                TextButton.icon(
-                                  icon: const Icon(
-                                    Icons.calendar_month,
-                                    color: Color.fromARGB(255, 158, 162, 177),
-                                  ),
-                                  label: Text(
-                                    startDate != null && endDate != null
-                                        ? "${DateFormat('yyyy-MM-dd').format(startDate!)} → ${DateFormat('yyyy-MM-dd').format(endDate!)}"
-                                        : "🗓️ Хугацаа сонгох",
-                                    style: const TextStyle(
-                                      color: Color.fromARGB(255, 158, 162, 177),
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    final picked =
-                                        await showDialog<List<DateTime>>(
-                                          context: context,
-                                          builder:
-                                              (context) =>
-                                                  TimelineDateRangeDialog(
-                                                    initialStart: startDate,
-                                                    initialEnd: endDate,
-                                                  ),
-                                        );
-                                    if (picked != null && picked.length == 2) {
-                                      setState(() {
-                                        startDate = picked[0];
-                                        endDate = picked[1];
-                                      });
-                                    }
-                                  },
-                                ),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    SizedBox(width: 10),
-                                    TextButton.icon(
-                                      icon: const Icon(
-                                        Icons.category,
-                                        color: Color.fromARGB(
-                                          255,
-                                          158,
-                                          162,
-                                          177,
+                                    Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            SizedBox(width: 30),
+                                            TextButton.icon(
+                                              style: TextButton.styleFrom(
+                                                padding: EdgeInsets.symmetric(vertical: 6),
+                                                minimumSize: Size.zero,
+                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                              ),
+                                              icon: const Icon(
+                                                Icons.calendar_today,
+                                                color: Color.fromARGB(255, 38, 217, 230),
+                                                size: 18,
+                                              ),
+                                              label: Text(
+                                                startDate != null && endDate != null
+                                                    ? "${DateFormat('yyyy-MM-dd').format(startDate!)} → ${DateFormat('yyyy-MM-dd').format(endDate!)}"
+                                                    : "🗓️ Хугацаа сонгох",
+                                                style: TextStyle(
+                                                  color: Color.fromARGB(255, 38, 217, 230),
+                                                  fontWeight: FontWeight.bold
+                                                ),
+                                              ),
+                                              onPressed: () async {
+                                                final picked = await showDialog<List<DateTime>>(
+                                                  context: context,
+                                                  builder: (context) =>
+                                                      TimelineDateRangeDialog(
+                                                        initialStart: startDate,
+                                                        initialEnd: endDate,
+                                                      ),
+                                                );
+                                                if (picked != null && picked.length == 2) {
+                                                  setState(() {
+                                                    startDate = picked[0];
+                                                    endDate = picked[1];
+                                                  });
+                                                }
+                                              },
+                                            ),
+                                            SizedBox(width: 30),
+
+                                             IconButton(
+      icon: Icon(Icons.download_rounded, color: Colors.white),
+      onPressed: () {
+        // downloadTransaction(txn);
+      },
+    ),
+                                          ],
                                         ),
-                                      ),
-                                      label: Text(
-                                        selectedCategory?.categoryName ??
-                                            'Ангилал сонгох',
-                                        style: const TextStyle(
-                                          color: Color.fromARGB(
-                                            255,
-                                            158,
-                                            162,
-                                            177,
-                                          ),
-                                        ),
-                                      ),
-                                      onPressed: () async {
-                                        final selected =
-                                            await showCategorySelectorDialogByType(
-                                              context: context,
-                                              type: selectedType.toLowerCase(),
-                                              selectedCategory:
-                                                  selectedCategory,
-                                            );
-                                        if (selected != null) {
-                                          setState(
-                                            () => selectedCategory = selected,
-                                          );
-                                        }
-                                      },
+                                        // Row(
+                                        //   mainAxisAlignment: MainAxisAlignment.start,
+                                        //   children: [
+                                        //     SizedBox(width: 10),
+                                        //     TextButton.icon(
+                                        //       style: TextButton.styleFrom(
+                                        //         padding: EdgeInsets.symmetric(vertical: 3),
+                                        //         minimumSize: Size.zero,
+                                        //         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                        //       ),
+                                        //       icon: const Icon(
+                                        //         Icons.category,
+                                        //         color: Color.fromARGB(255, 255, 255, 255),
+                                        //       ),
+                                        //       label: Text(
+                                        //         selectedCategory?.categoryName ?? 'Ангилал сонгох',
+                                        //         style: const TextStyle(
+                                        //           color: Color.fromARGB(255, 255, 255, 255),
+                                        //         ),
+                                        //       ),
+                                        //       onPressed: () async {
+                                        //         final selected = await showCategorySelectorDialogByType(
+                                        //           context: context,
+                                        //           type: selectedType.toLowerCase(),
+                                        //           selectedCategory: selectedCategory,
+                                        //         );
+                                        //         if (selected != null) {
+                                        //           setState(() => selectedCategory = selected);
+                                        //         }
+                                        //       },
+                                        //     ),
+                                        //   ],
+                                        // ),
+                        //                  Row(
+                        //   mainAxisAlignment: MainAxisAlignment.center,
+                        //   children: [
+                        //     _buildKpiCard("Орлого", "₮ 3,000,000", Colors.greenAccent),
+                        //     SizedBox(width: 15),
+                        //     _buildKpiCard("Зарлага", "₮ 2,500,000", Colors.redAccent)
+                        //   ],
+                        // ),
+                        walletSummary(balances),
+
+                                        SizedBox(height: 4),
+                                        filterChips(),
+                                        SizedBox(height: 8),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                walletSummary(balances),
-                                SizedBox(height: 10),
-                                filterChips(),
-                                SizedBox(height: 10),
-                              ],
+                              ),
                             ),
                           ),
-                          SizedBox(height: 10),
-
                           transactionList(transactions),
                         ],
                       ),
@@ -340,90 +353,87 @@ class _TransactionViewState extends State<TransactionView> {
     );
   }
 
-  Widget balanceDisplay(Map<String, double> balances) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      child: Row(
-        children: [
-          Text(
-            'Balance:  ',
-            style: TextStyle(
-              color: Color.fromARGB(255, 158, 162, 177),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            "\$${balances[selectedWallet]!.toStringAsFixed(2)}",
-            style: TextStyle(
-              color: Color.fromARGB(255, 158, 162, 177),
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget balanceDisplay(Map<String, double> balances) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+  //     child: Row(
+  //       children: [
+  //         Text(
+  //           'Үлдэгдэл:  ',
+  //           style: TextStyle(
+  //             color: Color.fromARGB(255, 158, 162, 177),
+  //             fontSize: 18,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //         Text(
+  //           "\$${balances[selectedWallet]!.toStringAsFixed(2)}",
+  //           style: TextStyle(
+  //             color: Color.fromARGB(255, 158, 162, 177),
+  //             fontSize: 20,
+  //             fontWeight: FontWeight.bold,
+  //           ),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget walletSummary(Map<String, double> balances) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+  return Row(
+    mainAxisAlignment: MainAxisAlignment.center,
+    children: [
+      walletCard(
+        "Нийт орлого:",
+        Icons.arrow_upward,
+        balances[selectedWallet] ?? 0.0,
+      ),
+      SizedBox(width: 5),
+      walletCard(
+        "Нийт зарлага:",
+        Icons.arrow_downward,
+        balances[selectedWallet] ?? 0.0,
+      ),
+    ],
+  );
+}
+
+Widget walletCard(String label, IconData icon, double value) {
+  return Container(
+    height: 60,
+    width: 160,
+    padding: EdgeInsets.symmetric(horizontal: 7, vertical: 10),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        walletCard(
-          "Нийт орлого:",
-          Icons.arrow_upward,
-          balances[selectedWallet]!,
+        Row(
+          children: [
+            Icon(icon, size: 14, color: Color.fromARGB(255, 255, 255, 255)),
+            SizedBox(width: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: Color.fromARGB(255, 237, 236, 236),
+                fontSize: 12,
+              ),
+            ),
+          ],
         ),
-        SizedBox(width: 5),
-        walletCard(
-          "Нийт зарлага:",
-          Icons.arrow_downward,
-          balances[selectedWallet]!,
+        SizedBox(height: 5),
+        Text(
+          formatCurrency(value), // <<<<<<<<<<<<<<<<<<
+          style: TextStyle(
+            color: Color.fromARGB(255, 255, 255, 255),
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
-    );
-  }
+    ),
+  );
+}
 
-  Widget walletCard(String label, IconData icon, double value) {
-    return Container(
-      height: 60,
-      width: 160,
-      padding: EdgeInsets.symmetric(horizontal: 7, vertical: 10),
-      // decoration: BoxDecoration(
-      //   color: Color.fromARGB(221, 67, 107, 167).withOpacity(0.2),
-      //   borderRadius: BorderRadius.circular(10),
-      //   border: Border.all(color: Colors.white24),
-      // ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: Color.fromARGB(255, 158, 162, 177)),
-              SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  color: Color.fromARGB(255, 158, 162, 177),
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 5),
-          Text(
-            "\$${value.toStringAsFixed(2)} MNT",
-            style: TextStyle(
-              color: Color.fromARGB(255, 158, 162, 177),
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+
 
   Widget filterChips() {
     return Padding(
@@ -431,20 +441,11 @@ class _TransactionViewState extends State<TransactionView> {
       child: Container(
         height: 37,
         decoration: BoxDecoration(
-          // border: Border.all(
-          //   color: const Color.fromARGB(
-          //     255,
-          //     197,
-          //     197,
-          //     197,
-          //   ).withOpacity(0.5), // хүрээний өнгө
-          //   width: 1.5, // хүрээний зузаан
-          // ),
-          color: const Color.fromARGB(255, 158, 162, 177).withOpacity(0.8),
+          color: const Color.fromARGB(255, 3, 12, 31).withOpacity(0.8),
           borderRadius: BorderRadius.circular(8),
           boxShadow: [
             BoxShadow(
-              color: Color.fromARGB(255, 184, 196, 206),
+              color: Color.fromARGB(255, 2, 19, 53).withOpacity(0.8),
               blurRadius: 5,
               offset: Offset(0, 0),
             ),
@@ -452,107 +453,112 @@ class _TransactionViewState extends State<TransactionView> {
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children:
-              ['All', 'Income', 'Expense'].map((type) {
-                return ChoiceChip(
-                  label: Text(
-                    type,
-                    style: TextStyle(
-                      color: selectedType == type ? Colors.white : Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  selected: selectedType == type,
-                  selectedColor: Colors.blue,
-                  backgroundColor: const Color.fromARGB(
-                    255,
-                    139,
-                    144,
-                    160,
-                  ).withOpacity(0.8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                  onSelected: (_) => setState(() => selectedType = type),
-                );
-              }).toList(),
+          children: ['Бүгд', 'Орлого', 'Зарлага'].map((type) {
+            return ChoiceChip(
+              label: Text(
+                type,
+                style: TextStyle(
+                  color: selectedType == type
+                      ? const Color.fromARGB(255, 0, 0, 0)
+                      : const Color.fromARGB(255, 255, 255, 255),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              selected: selectedType == type,
+              selectedColor: const Color.fromARGB(255, 255, 255, 255),
+              backgroundColor:
+                  const Color.fromARGB(255, 3, 12, 31),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              onSelected: (_) => setState(() => selectedType = type),
+            );
+          }).toList(),
         ),
       ),
     );
   }
-
   Widget transactionList(List<TransactionModel> transactions) {
-  final grouped = groupTransactionsByDate(transactions);
+    final grouped = groupTransactionsByDate(transactions);
 
-  if (transactions.isEmpty) {
-    return Center(
-      child: Text(
-        'No transactions available.',
-        style: TextStyle(color: Colors.white70, fontSize: 16),
+    if (transactions.isEmpty) {
+      return Center(
+        child: Text(
+          'Гүйлгээ олдсонгүй.',
+          style: TextStyle(color: Colors.white70, fontSize: 16),
+        ),
+      );
+    }
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 200),
+      child: Column(
+        children: grouped.entries.map((entry) {
+          final date = entry.key;
+          final txnList = entry.value;
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 🗓️ Огнооны гарчиг
+             Padding(
+               padding: const EdgeInsets.all(5.0),
+               child: Container(
+                 width: double.infinity, // 🔥 Бүхэлдээ дэлгэцийн өргөний хэмжээгээр тэлнэ!
+                 decoration: BoxDecoration(
+                   color: Colors.white.withOpacity(0.1),
+                 ),
+                 child: Padding(
+                   padding: const EdgeInsets.symmetric(
+                     vertical: 7.0,
+                     horizontal: 16,
+                   ),
+                   child: Text(
+                     date,
+                     style: const TextStyle(
+                       fontSize: 13.5,
+                       fontWeight: FontWeight.bold,
+                       color: Color.fromARGB(255, 30, 183, 194),
+                     ),
+                   ),
+                 ),
+               ),
+             ),
+
+              // 💳 Тухайн өдрийн гүйлгээнүүд
+              ...txnList.map((txn) {
+               final isIncome = txn.transactionType == 'income';
+final amountText = (isIncome ? '+ ' : '- ') +
+    formatCurrency(txn.transactionAmount); // <<<<<<<<<<<<
+
+                final dateStr = txn.transactionDate;
+
+                return Padding(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 1.0,
+                    horizontal: 0.0,
+                  ),
+                  child: TransactionItem(
+                    iconData: txn.category?.iconData ?? Icons.category,
+                    iconColor: txn.category?.safeColor ?? Colors.grey,
+                    title: txn.transactionName,
+                    subtitle:  txn.category?.categoryName ?? txn.transactionName,
+                    amount: amountText,
+                    // time: dateStr,
+                    onPressed: () {
+                      showTransactionDetailDialog(context, txn);
+                      print('Item clicked: ${txn.transactionName}');
+                    },
+                  ),
+                );
+              }).toList(),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
-
-  return SingleChildScrollView(
-    padding: const EdgeInsets.only(bottom: 200),
-    child: Column(
-      children: grouped.entries.map((entry) {
-        final date = entry.key;
-        final txnList = entry.value;
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 🗓️ Огнооны гарчиг
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                vertical: 8.0,
-                horizontal: 16,
-              ),
-              child: Text(
-                date,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white70,
-                ),
-              ),
-            ),
-
-            // 💳 Тухайн өдрийн гүйлгээнүүд
-            ...txnList.map((txn) {
-              final isIncome = txn.transactionType == 'income';
-              final amountText = (isIncome ? '+' : '-') +
-                  "\$${txn.transactionAmount.toStringAsFixed(2)}";
-
-              final dateStr = txn.transactionDate;
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 1.0,
-                  horizontal: 0.0,
-                ),
-                child: TransactionItem(
-                  iconData: txn.category?.iconData ?? Icons.category,
-                  iconColor: txn.category?.safeColor ?? Colors.grey,
-                  title: txn.category?.categoryName ?? txn.transactionName,
-                  subtitle: txn.transactionName,
-                  amount: amountText,
-                  // time: dateStr,
-                  onPressed: () {
-                      showTransactionDetailDialog(context, txn);
-                    print('Item clicked: ${txn.transactionName}');
-                  },
-                ),
-              );
-            }).toList(),
-          ],
-        );
-      }).toList(),
-    ),
-  );
-}
 
   Map<String, List<TransactionModel>> groupTransactionsByDate(
     List<TransactionModel> transactions,
@@ -562,7 +568,7 @@ class _TransactionViewState extends State<TransactionView> {
     for (var txn in transactions) {
       final date = DateFormat(
         'yyyy-MM-dd',
-      ).format(DateTime.parse(txn.transactionDate)); // ✅ parse хийж байна
+      ).format(DateTime.parse(txn.transactionDate));
       if (!grouped.containsKey(date)) {
         grouped[date] = [];
       }
@@ -585,13 +591,13 @@ class _TransactionViewState extends State<TransactionView> {
         privateBalance += amount;
       }
     }
-    return {'Family Wallet': familyBalance, 'Private Wallet': privateBalance};
+    return {'Гэр бүлийн гүйлгээ': familyBalance, 'Хувийн гүйлгээ': privateBalance};
   }
 
   String getWalletName(String? walletType) {
-    if (walletType == 'family') return 'Family Wallet';
-    if (walletType == 'private') return 'Private Wallet';
-    return 'Unknown';
+    if (walletType == 'family') return 'Гэр бүлийн гүйлгээ';
+    if (walletType == 'private') return 'Хувийн гүйлгээ';
+    return 'Тодорхойгүй';
   }
 
   IconData getWalletIcon(String? walletType) {
@@ -599,4 +605,15 @@ class _TransactionViewState extends State<TransactionView> {
     if (walletType == 'private') return Icons.account_circle;
     return Icons.question_mark;
   }
+
+
+  
+  String formatCurrency(double value, {bool symbolFirst = true}) {
+  final formatter = NumberFormat("#,##0", "mn");
+  return symbolFirst
+      ? "${formatter.format(value)} ₮"
+      : "₮ ${formatter.format(value)}";
 }
+
+}
+

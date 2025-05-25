@@ -1,4 +1,5 @@
 import 'package:budgetfrontend/views/goals/goal_view.dart';
+import 'package:budgetfrontend/views/report/report_view.dart';
 import 'package:flutter/material.dart';
 import 'package:persistent_bottom_nav_bar_v2/persistent_bottom_nav_bar_v2.dart';
 import 'package:budgetfrontend/views/home/home_view.dart';
@@ -17,21 +18,21 @@ class MainTabView extends StatelessWidget {
           screen: const HomeView(),
           item: ItemConfig(
             icon: const Icon(Icons.home),
-            title: "Home",
+            title: "Нүүр",
           ),
         ),
          PersistentTabConfig(
           screen: const TransactionView(),
           item: ItemConfig(
             icon: const Icon(Icons.calendar_view_day),
-            title: "Records",
+            title: "Гүйлгээ",
           ),
         ),
         PersistentTabConfig(
           screen:  BudgetView(),
           item: ItemConfig(
             icon: const Icon(Icons.wallet),
-            title: "Budgets",
+            title: "Төсөв",
           ),
         ),
        
@@ -39,9 +40,16 @@ class MainTabView extends StatelessWidget {
           screen: GoalView(),
           item: ItemConfig(
             icon: const Icon(Icons.credit_card),
-            title: "Goals",
+            title: "Зорилго",
           ),
         ),
+        //  PersistentTabConfig(
+        //   screen: ReportView(),
+        //   item: ItemConfig(
+        //     icon: const Icon(Icons.bar_chart),
+        //     title: "Тайлан",
+        //   ),
+        // ),
       ],
       navBarBuilder: (navBarConfig) => Style8BottomNavBar(
         navBarConfig: navBarConfig,

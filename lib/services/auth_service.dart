@@ -12,7 +12,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:dio/dio.dart';
 
 class AuthService {
-  static const String _baseUrl = "http://192.168.84.223:3001";
+  static const String _baseUrl = "http://192.168.1.4:3001";
    static Dio dio = Dio();
 
   // Токен хадгалах

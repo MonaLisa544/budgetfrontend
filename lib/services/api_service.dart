@@ -1,13 +1,16 @@
 import 'dart:convert';
+import 'package:budgetfrontend/controllers/budget_controller.dart';
+import 'package:budgetfrontend/controllers/wallet_controller.dart';
 import 'package:budgetfrontend/models/budget_model.dart';
 import 'package:budgetfrontend/models/category_model.dart';
 import 'package:budgetfrontend/models/goal_model.dart';
 import 'package:budgetfrontend/models/transaction_model.dart';
 import 'package:budgetfrontend/services/auth_service.dart';
 import 'package:http/http.dart' as http;
+import 'package:get/get.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://192.168.84.223:3001/api/v1';
+  static const String baseUrl = 'http://192.168.1.4:3001/api/v1';
 
   static Future<Map<String, String>> get headers async {
     final token = await AuthService.getToken();
@@ -52,25 +55,43 @@ class ApiService {
 
 static Future<TransactionModel?> postTransactionWithType(TransactionModel txn, String type) async {
   final bodyData = {
-    'transaction': txn.toJson(), // ✅ transaction key дотор хийх
-    'type': type,                // optional field гадна талд
+    'transaction': txn.toJson(),
+    'type': type,
   };
-  // bodyData['type'] = type; // "type" гэж нэмэлтээр хийчихнэ
+
   final response = await http.post(
     Uri.parse('$baseUrl/transactions'),
     headers: await headers,
-    body: jsonEncode(bodyData), // ❗️шууд transaction-ийн талбарууд явуулна
+    body: jsonEncode(bodyData),
   );
 
-  if (response.statusCode == 200 || response.statusCode == 201) {
-    final attributes = jsonDecode(response.body)['data']['attributes'];
+  print('SERVER RESPONSE: ${response.body}'); // Шалгалтын тулд хадгал!
+
+ if (response.statusCode == 200 || response.statusCode == 201) {
+    Get.find<WalletController>().fetchWallets();
+    Get.find<BudgetController>().fetchBudgets();
+  final decoded = jsonDecode(response.body);
+  final data = decoded['data'];
+  final attributes = data['attributes'] ?? {};
+  attributes['id'] = data['id'];
+
+  if (attributes['category_id'] == null &&
+      data['relationships'] != null &&
+      data['relationships']['category'] != null) {
+    attributes['category_id'] =
+        int.tryParse(data['relationships']['category']['data']['id'].toString());
+  }
+
+  print('ATTRIBUTES: $attributes');
+  try {
     return TransactionModel.fromJson(attributes);
-  } else {
-    print('❌ Гүйлгээ үүсгэхэд алдаа гарлаа: ${response.statusCode} - ${response.body}');
+  } catch (e) {
+    print('FROM JSON ERROR: $e');
     return null;
   }
 }
 
+}
 
   
 
@@ -118,20 +139,6 @@ static Future<TransactionModel?> postTransactionWithType(TransactionModel txn, S
   }
 
   // ------------------- CATEGORIES -------------------
-
-  // static Future<List<CategoryModel>> getCategories(String type) async {
-  //   final response = await http.get(
-  //     Uri.parse('$baseUrl/categories?transaction_type=$type'),
-  //     headers: await headers,
-  //   );
-
-  //   if (response.statusCode == 200) {
-  //     final List data = jsonDecode(response.body);
-  //     return data.map((e) => CategoryModel.fromJson(e)).toList();
-  //   } else {
-  //     throw Exception('Категори татаж чадсангүй');
-  //   }
-  // }
 
   static Future<List<CategoryModel>> getCategories(String type) async {
   final response = await http.get(
@@ -234,98 +241,71 @@ static Future<TransactionModel?> postTransactionWithType(TransactionModel txn, S
 
   // -----------------------------------------
 
-  static Future<List<BudgetModel>> fetchBudgets() async {
+  static Future<List<BudgetModel>> fetchBudgets({String? yearMonth}) async {
   final token = await AuthService.getToken();
 
-  print('⏳ Budget таталт эхэллээ...'); // ✅ Эхлэхэд
-
+  final query = yearMonth != null ? "?year=${yearMonth.split('-')[0]}&month=${int.parse(yearMonth.split('-')[1])}" : "";
   final response = await http.get(
-    Uri.parse('$baseUrl/budgets'),
+    Uri.parse('$baseUrl/budgets$query'),
     headers: {
       'Authorization': 'Bearer $token',
       'Content-Type': 'application/json',
     },
   );
 
-  print('📡 API хариу статус: ${response.statusCode}'); // ✅ Статус хэвлэх
-
   if (response.statusCode == 200) {
     final jsonBody = jsonDecode(response.body);
     if (jsonBody['data'] is List) {
-      print('✅ Budget data амжилттай ирлээ, item count: ${(jsonBody['data'] as List).length}'); // ✅ хэд ирсэн харуулах
       return (jsonBody['data'] as List)
           .map((item) => BudgetModel.fromJson(item))
           .toList();
     } else {
-      print('❌ Invalid data structure: ${jsonBody}');
-      throw Exception('Invalid data structure');
+      throw Exception('Invalid budget data structure');
     }
   } else {
-    print('❌ Budget таталт амжилтгүй: ${response.statusCode}');
-    throw Exception('Failed to fetch budgets: ${response.statusCode}');
+    throw Exception('Failed to fetch budgets');
   }
 }
 
  static Future<void> createBudget(BudgetModel budget) async {
-    final token = await AuthService.getToken();
-    final body = {
-      "budget": {
-        "type": budget.ownerType.toLowerCase(),
-        "category_id": budget.categoryId,
-        "budget_name": budget.budgetName,
-        "amount": budget.amount,
-        "start_date": budget.startDate,
-        "due_date": budget.dueDate,
-        "pay_due_date": budget.payDueDate,
-        "status": budget.status,
-        "description": budget.description,
-      }
-    };
+  final token = await AuthService.getToken();
+  final body = {
+    "budget": budget.toJson(), // ➡️ шууд toJson() ашиглана
+  };
 
-    final response = await http.post(
-      Uri.parse('$baseUrl/budgets'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(body),
-    );
+  final response = await http.post(
+    Uri.parse('$baseUrl/budgets'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode(body),
+  );
 
-    if (response.statusCode != 201) {
-      throw Exception('Failed to create budget');
-    }
+  if (response.statusCode != 201) {
+    throw Exception('Failed to create budget');
   }
+}
 
-  static Future<void> updateBudget(int id, BudgetModel budget) async {
-    final token = await AuthService.getToken();
-    final body = {
-      "budget": {
-        "type": budget.ownerType.toLowerCase(),
-        "category_id": budget.categoryId,
-        "budget_name": budget.budgetName,
-        "amount": budget.amount,
-        "start_date": budget.startDate,
-        "due_date": budget.dueDate,
-        "pay_due_date": budget.payDueDate,
-        "status": budget.status,
-        "description": budget.description,
-      }
-    };
+static Future<void> updateBudget(int id, BudgetModel budget) async {
+  final token = await AuthService.getToken();
+  final body = {
+    "budget": budget.toJson(), // ➡️ шууд toJson() ашиглана
+  };
 
-    final response = await http.put(
-      Uri.parse('$baseUrl/budgets/${id}'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode(body),
-    );
+  final response = await http.put(
+    Uri.parse('$baseUrl/budgets/$id'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode(body),
+  );
 
-    if (response.statusCode != 200) {
-      throw Exception('Failed to update budget');
-    }
+  if (response.statusCode != 200) {
+    throw Exception('Failed to update budget');
   }
-
+}
   static Future<void> deleteBudget(int id) async {
   final token = await AuthService.getToken();
 

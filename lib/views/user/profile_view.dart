@@ -1,6 +1,8 @@
 import 'dart:ui';
 import 'package:budgetfrontend/controllers/auth_controller.dart';
+import 'package:budgetfrontend/services/auth_service.dart';
 import 'package:budgetfrontend/views/home/back_app_bar.dart';
+import 'package:budgetfrontend/views/login/sign_in_view.dart';
 import 'package:budgetfrontend/views/transactions/category_view.dart';
 import 'package:budgetfrontend/views/user/edit_profile.dart';
 import 'package:budgetfrontend/views/user/family_view.dart';
@@ -23,7 +25,7 @@ class _ProfileViewState extends State<ProfileView> {
 
     return Scaffold(
       backgroundColor: Color.fromARGB(255, 235, 245, 255),
-      appBar: BackAppBar(title: 'Profile'),
+      appBar: BackAppBar(title: 'Хувийн мэдээлэл'),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -130,7 +132,7 @@ class _ProfileViewState extends State<ProfileView> {
                       children: [
                         _ProfileTile(
                           icon: Icons.person_outline,
-                          text: 'Account',
+                          text: 'Бүртгэл',
                           onTap: () {
     Navigator.push(
       context,
@@ -141,7 +143,7 @@ class _ProfileViewState extends State<ProfileView> {
                         const Divider(height: 1),
                         _ProfileTile(
                           icon: Icons.folder_copy,
-                          text: 'Categories',
+                          text: 'Ангилал',
                            onTap: () {
     Navigator.push(
       context,
@@ -152,7 +154,7 @@ class _ProfileViewState extends State<ProfileView> {
                         const Divider(height: 1),
                         _ProfileTile(
                           icon: Icons.share,
-                          text: 'Manage family',
+                          text: 'Гэр бүл',
                            onTap: () {
     Navigator.push(
       context,
@@ -161,28 +163,23 @@ class _ProfileViewState extends State<ProfileView> {
   },
                         ),
                         const Divider(height: 1),
-                        _ProfileTile(
-                          icon: Icons.star_border,
-                          text: 'Review',
-                        ),
-                        const Divider(height: 1),
-                        _ProfileTile(
-                          icon: Icons.info_outline,
-                          text: 'Info',
-                        ),
-                        const Divider(height: 1),
+                        
                         ListTile(
                           leading: const Icon(Icons.logout, color: Colors.red),
                           title: const Text(
-                            'Log out',
+                            'Гарах',
                             style: TextStyle(
                               fontSize: 16,
                               color: Colors.red,
                             ),
                           ),
-                          onTap: () async {
-                            await authController.logout();
-                          },
+                         onTap: () async {
+  await AuthService.logout();
+  Navigator.of(context).pushAndRemoveUntil(
+    MaterialPageRoute(builder: (_) => SignInView()), // LoginView-ээ энд оруулна
+    (route) => false,
+  );
+}
                         ),
                       ],
                     ),

@@ -6,8 +6,8 @@ import 'package:budgetfrontend/views/transactions/category_selecter_dialog.dart'
 import 'package:budgetfrontend/widgets/blue_field_text_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
+import 'package:intl/intl.dart';
 
 class AddBudgetView extends StatefulWidget {
   final BudgetModel? editBudget;
@@ -25,43 +25,59 @@ class _AddBudgetViewState extends State<AddBudgetView> {
   final nameController = TextEditingController();
   final amountController = TextEditingController();
   final descriptionController = TextEditingController();
-  DateTime selectedDate = DateTime.now();
-  final List<String> accounts = ['Family Wallet', 'Private Wallet'];
-  String selectedAccount = 'Family Wallet';
+  final List<String> accounts = ['Гэр бүлийн данс', 'Хувийн данс'];
+  String selectedAccount = 'Хувийн данс';
   CategoryModel? selectedCategory;
   DateTime? startDate;
   DateTime? dueDate;
- late int selectedDueDay; // 🎯 Сонгогдсон сарын өдөр
+ int selectedDueDay = DateTime.now().day; // 🎯 Сонгогдсон сарын өдөр
 
 
   String? categoryError;
   bool showField = false;
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.editBudget != null) {
-      final budget = widget.editBudget!;
-      nameController.text = budget.budgetName;
-      amountController.text = budget.amount.toString();
-      descriptionController.text = budget.description;
-      selectedAccount =
-          budget.ownerType == 'Family' ? 'Family Wallet' : 'Private Wallet';
-      startDate = DateTime.parse(budget.startDate);
-      dueDate = DateTime.parse(budget.dueDate);
-      selectedDate = DateTime.parse(budget.payDueDate);
-      selectedCategory = budget.category;
+void initState() {
+  super.initState();
+  // Add listener for formatting currency in ALL cases (not just edit)
+  amountController.addListener(() {
+    final text = amountController.text.replaceAll(RegExp(r'[^\d]'), '');
+    if (text.isEmpty) {
+      amountController.value = TextEditingValue(
+        text: '',
+        selection: const TextSelection.collapsed(offset: 0),
+      );
     } else {
-      startDate = DateTime.now();
-      dueDate = DateTime.now().add(const Duration(days: 30));
+      final formatter = NumberFormat("#,##0", "mn");
+      final newText = formatter.format(int.parse(text));
+      amountController.value = TextEditingValue(
+        text: newText,
+        selection: TextSelection.collapsed(offset: newText.length),
+      );
     }
+  });
+
+  if (widget.editBudget != null) {
+    final budget = widget.editBudget!;
+    nameController.text = budget.budgetName;
+    // amountController.text = budget.amount.toString(); // Үүнийг автоматаар форматлаж үзүүлнэ!
+    amountController.text = NumberFormat("#,##0", "mn").format(budget.amount);
+    descriptionController.text = budget.description;
+    selectedAccount =
+        budget.walletType == 'Family' ? 'Гэр бүлийн данс' : 'Хувийн данс';
+    selectedDueDay = budget.payDueDate;
+    selectedCategory = budget.category;
+  } else {
+    startDate = DateTime.now();
+    dueDate = DateTime.now().add(const Duration(days: 30));
   }
+}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: BackAppBar(
-        title: widget.editBudget != null ? 'Edit Budget' : 'Add Budget',
+        title: widget.editBudget != null ? 'Төсөв засах' : 'Төсөв нэмэх',
       ),
       backgroundColor: Colors.white,
       body: BlueTextFieldTheme(
@@ -73,7 +89,7 @@ class _AddBudgetViewState extends State<AddBudgetView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 FloatingLabelContainer(
-                  label: 'Category (Expense)',
+                  label: 'Ангилал (Зарлага)',
                   child: InkWell(
                     onTap: () async {
                       final selected = await showCategorySelectorDialogByType(
@@ -110,7 +126,7 @@ class _AddBudgetViewState extends State<AddBudgetView> {
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
-                                  selectedCategory?.categoryName ?? 'Choose category',
+                                  selectedCategory?.categoryName ?? 'Ангилал сонгох',
                                   style: TextStyle(
                                     color: selectedCategory == null ? Colors.grey : Colors.black,
                                   ),
@@ -135,9 +151,9 @@ class _AddBudgetViewState extends State<AddBudgetView> {
                 const SizedBox(height: 16),
                 TextFormField(
   controller: nameController,
-  keyboardType: TextInputType.number,
+  keyboardType: TextInputType.text,
   decoration: InputDecoration(
-    labelText: 'Name',
+    labelText: 'Төсвийн нэр',
     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
     labelStyle: const TextStyle(
       color: Colors.grey,
@@ -162,7 +178,7 @@ class _AddBudgetViewState extends State<AddBudgetView> {
   ),
    validator: (value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Please enter name';
+      return 'Төсвийн нэр оруулна уу!';
     }
     return null;
   },
@@ -172,7 +188,8 @@ class _AddBudgetViewState extends State<AddBudgetView> {
   controller: amountController,
   keyboardType: TextInputType.number,
   decoration: InputDecoration(
-    labelText: 'Amount',
+    labelText: 'Үнийн дүн',
+    prefix: const Text('₮ ', style: TextStyle(fontWeight: FontWeight.bold)),
     contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
     labelStyle: const TextStyle(
       color: Colors.grey,
@@ -203,15 +220,17 @@ class _AddBudgetViewState extends State<AddBudgetView> {
       borderSide: const BorderSide(color: Colors.blue, width: 1.5),
     ),
   ),
-   validator: (value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Please enter amount';
-    }
-    if (double.tryParse(value) == null || double.parse(value) <= 0) {
-      return 'Enter a valid amount';
-    }
-    return null;
-  },
+  validator: (value) {
+  if (value == null || value.trim().isEmpty) {
+    return 'Үнийн дүн оруулна уу!';
+  }
+  final onlyDigits = value.replaceAll(RegExp(r'[^\d]'), '');
+  if (onlyDigits.isEmpty || double.tryParse(onlyDigits) == null || double.parse(onlyDigits) <= 0) {
+    return 'Боломжгүй үнийн дүн байна ';
+  }
+  return null;
+},
+
 ),
                 const SizedBox(height: 16),
                DropdownButtonFormField<String>(
@@ -222,7 +241,7 @@ class _AddBudgetViewState extends State<AddBudgetView> {
   dropdownColor: Colors.white,
   borderRadius: BorderRadius.circular(16),
   decoration: InputDecoration(
-    labelText: 'Account',
+    labelText: 'Данс',
     floatingLabelStyle: const TextStyle(
       color: Colors.black38,
       fontWeight: FontWeight.bold,
@@ -294,95 +313,84 @@ class _AddBudgetViewState extends State<AddBudgetView> {
     });
   },
 ),
+ const SizedBox(height: 16),
  Center(
-                 child: TextButton(
-                           onPressed: () {
-                             setState(() {
-                               showField = !showField; // ✅ toggle хийх
-                             });
-                           },
-                           child: Row(
-                             mainAxisSize: MainAxisSize.min,
-                             children: [
-                               const Text(
-                  "MORE",
-                  style: TextStyle(color: Colors.blue),
-                               ),
-                               const SizedBox(width: 4),
-                               Icon(
-                  showField ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                  color: Colors.blue,
-                               ),
-                             ],
-                           ),
-                         ),
-               ),
-                const SizedBox(height: 16),
-                Text("Reminder", style: TextStyle(fontWeight: FontWeight.w500)),
-                SizedBox(height: 5),
-            Container(
-  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-  decoration: BoxDecoration(
-    border: Border.all(
-      color: const Color.fromARGB(255, 185, 185, 185), // 🎯 Хүрээний өнгө
-      width: 1.5,         // 🎯 Хүрээний зузаан
-    ),
-    borderRadius: BorderRadius.circular(20), // 🎯 Буланг дугуйруулна
-    color: Colors.white, // 🎯 Дотор фонт цагаан
-  ),
-  child: buildMonthlyDueDateSelector(),
-),
-                FloatingLabelContainer(
-                  label: 'Pay Due Date',
-                  child: InkWell(
-                    onTap: () => pickExpectedDate(context),
-                    child: InputDecorator(
-                      decoration: _inputDecoration(''),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(DateFormat('dd MMM yyyy').format(selectedDate)),
-                          const Icon(Icons.calendar_today, size: 18),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                 TextFormField(
-  controller: descriptionController,
-  minLines: 3,
-  maxLines: 5,
-  keyboardType: TextInputType.multiline,
-  decoration: InputDecoration(
-    labelText: 'Notes', // 🎯 LabelText ашиглана
-    floatingLabelBehavior: FloatingLabelBehavior.auto, // 🎯 Auto дээш хөөрдөг
-    labelStyle: TextStyle(
-      color: Colors.grey.shade400,
-    ),
-    floatingLabelStyle: TextStyle(
-      color: const Color.fromARGB(255, 138, 137, 137),
-      fontWeight: FontWeight.bold,
-    ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    fillColor: const Color.fromARGB(255, 255, 255, 255), // 🎯 Арын фонт
-    filled: true,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
-      borderSide: BorderSide(color: Colors.grey.shade300),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
-      borderSide: BorderSide(color: const Color.fromARGB(255, 179, 178, 178)),
-    ),
-    focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20),
-      borderSide: BorderSide(color: Colors.blue, width: 1.5),
+  child: TextButton(
+    onPressed: () {
+      setState(() {
+        showField = !showField; // ✅ toggle хийх
+      });
+    },
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          showField ? "Нуух" : "Цааш",
+          style: const TextStyle(color: Colors.blue),
+        ),
+        const SizedBox(width: 4),
+        Icon(
+          showField ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+          color: Colors.blue,
+        ),
+      ],
     ),
   ),
-  style: const TextStyle(fontSize: 16),
 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
+               if (showField) ...[
+                TextFormField(
+    controller: descriptionController,
+    minLines: 3,
+    maxLines: 5,
+    keyboardType: TextInputType.multiline,
+    decoration: InputDecoration(
+      labelText: 'Тайлбар',
+      floatingLabelBehavior: FloatingLabelBehavior.auto,
+      labelStyle: TextStyle(
+        color: Colors.grey.shade400,
+      ),
+      floatingLabelStyle: TextStyle(
+        color: const Color.fromARGB(255, 138, 137, 137),
+        fontWeight: FontWeight.bold,
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      fillColor: Colors.white,
+      filled: true,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide(color: Colors.grey.shade300),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: const BorderSide(color: Color.fromARGB(255, 179, 178, 178)),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(20),
+        borderSide: BorderSide(color: Colors.blue, width: 1.5),
+      ),
+    ),
+    style: const TextStyle(fontSize: 16),
+  ),
+  const SizedBox(height: 16),
+  Text("Сануулга", style: TextStyle(fontWeight: FontWeight.w500)),
+  SizedBox(height: 5),
+  Container(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+    decoration: BoxDecoration(
+      border: Border.all(
+        color: const Color.fromARGB(255, 185, 185, 185),
+        width: 1.5,
+      ),
+      borderRadius: BorderRadius.circular(20),
+      color: Colors.white,
+    ),
+    child: buildMonthlyDueDateSelector(),
+  ),
+  const SizedBox(height: 16),
+  
+],
+                // const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: saveBudget,
                   style: ElevatedButton.styleFrom(
@@ -390,7 +398,7 @@ class _AddBudgetViewState extends State<AddBudgetView> {
                     backgroundColor: Colors.blue,
                   ),
                   child: Text(
-                    widget.editBudget != null ? 'Update' : 'Create',
+                    widget.editBudget != null ? 'Засах' : 'Үүсгэх',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -405,7 +413,7 @@ class _AddBudgetViewState extends State<AddBudgetView> {
                     ),
                   ),
                   child: const Text(
-                    'Cancel',
+                    'Цуцлах',
                     style: TextStyle(color: Colors.blue),
                   ),
                 ),
@@ -427,96 +435,51 @@ class _AddBudgetViewState extends State<AddBudgetView> {
       );
 
   void saveBudget() async {
-    if (_formKey.currentState!.validate() && selectedCategory != null) {
-      final walletType = selectedAccount == 'Family Wallet' ? 'family' : 'private';
+  if (_formKey.currentState!.validate() && selectedCategory != null) {
+    final walletType = selectedAccount == 'Гэр бүлийн данс' ? 'family' : 'private';
 
-      final budget = BudgetModel(
-        id: widget.editBudget?.id ?? 0,
-        budgetName: nameController.text.trim(),
-        amount: double.tryParse(amountController.text.trim()) ?? 0.0,
-        usedAmount: widget.editBudget?.usedAmount ?? 0.0,
-        startDate: DateFormat('yyyy-MM-dd').format(startDate!),
-        dueDate: DateFormat('yyyy-MM-dd').format(dueDate!),
-        payDueDate: DateFormat('yyyy-MM-dd').format(selectedDate),
-        status: 'active',
-        description: descriptionController.text.trim(),
-        statusLabel: 'Active',
-        ownerType: walletType == 'family' ? 'Family' : 'Private',
-        ownerId: 0,
-        walletId: 0,
-        categoryId: selectedCategory!.id!,
-        category: selectedCategory,
-      );
+    // 🔥 Тоон утгыг зөв авч байгаа эсэх
+    final onlyDigits = amountController.text.replaceAll(RegExp(r'[^\d]'), '');
+    final amount = onlyDigits.isEmpty ? 0.0 : double.parse(onlyDigits);
 
-      if (widget.editBudget != null) {
-        await controller.updateBudget(widget.editBudget!.id, budget);
-      } else {
-        await controller.createBudget(budget);
-      }
-      Navigator.pop(context);
+    final budget = BudgetModel(
+      id: widget.editBudget?.id ?? 0,
+      budgetName: nameController.text.trim(),
+      amount: amount, // <-- Форматлагдсан утга биш, зөвхөн тоон утга!
+      payDueDate: selectedDueDay,
+      description: descriptionController.text.trim(),
+      walletType: walletType == 'family' ? 'Family' : 'Private',
+      categoryId: selectedCategory!.id!,
+      category: selectedCategory,
+    );
+
+    if (widget.editBudget != null) {
+      await controller.updateBudget(widget.editBudget!.id, budget);
     } else {
-      setState(() {
-        if (selectedCategory == null) categoryError = 'Please choose a category';
-      });
+      await controller.createBudget(budget);
     }
+    Navigator.pop(context);
+  } else {
+    setState(() {
+      if (selectedCategory == null) categoryError = 'Ангилал сонгоно уу!';
+    });
   }
-
-   void pickExpectedDate(BuildContext context) {
-  DateTime tempPickedDate = selectedDate; // 🎯 selectedDate-ийг түр хадгална
-
-  showCupertinoModalPopup(
-    context: context,
-    useRootNavigator: true,
-    builder: (popupContext) => Container(
-      height: 300,
-      color: Colors.white,
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          Expanded(
-            child: CupertinoDatePicker(
-              mode: CupertinoDatePickerMode.date,
-              initialDateTime: selectedDate, // 🎯 selectedDate эхлэх
-              minimumDate: DateTime(2020, 1, 1),
-              maximumDate: DateTime(2035, 12, 31),
-              onDateTimeChanged: (DateTime newDate) {
-                tempPickedDate = newDate; // 🎯 Түр хадгална
-              },
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              CupertinoButton(
-                child: const Text('OK', style: TextStyle(color: Colors.blue)),
-                onPressed: () {
-                  setState(() {
-                    selectedDate = tempPickedDate; // 🎯 OK дархад selectedDate-г онооно
-                  });
-                  Navigator.of(popupContext).pop();
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
 }
+
 Widget buildMonthlyDueDateSelector() {
   return Row(
     mainAxisAlignment: MainAxisAlignment.spaceBetween,
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
       const Text(
-        'Monthly Due Date',
+        'Сарын төлбөрийн хугацаа',
         style: TextStyle(
-          fontSize: 14,
+          fontSize: 12,
           // fontWeight: FontWeight.w600,
           color: Color.fromARGB(221, 39, 39, 39),
         ),
       ),
-      SizedBox(width: 30),
+      SizedBox(width: 0),
       Row(
         children: [
           IconButton(
@@ -587,3 +550,13 @@ class FloatingLabelContainer extends StatelessWidget {
     );
   }
 }
+
+String formatCurrency(String value) {
+  if (value.isEmpty) return "₮ 0";
+  final onlyDigits = value.replaceAll(RegExp(r'[^\d]'), '');
+  if (onlyDigits.isEmpty) return "₮ 0";
+  final number = int.parse(onlyDigits);
+  final formatter = NumberFormat("#,##0", "mn");
+  return "₮ ${formatter.format(number)}";
+}
+

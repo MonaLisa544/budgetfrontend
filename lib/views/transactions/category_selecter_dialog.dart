@@ -23,7 +23,7 @@ Future<CategoryModel?> showCategorySelectorDialogByType({
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Text('Ангилал', style: TextStyle(fontWeight: FontWeight.bold)),
                 TextButton(
                   onPressed: () async {
                     await Navigator.push(
@@ -34,7 +34,7 @@ Future<CategoryModel?> showCategorySelectorDialogByType({
                       futureCategories = ApiService.getCategories(type);
                     });
                   },
-                  child: const Text('Edit', style: TextStyle(color: Colors.blue),),
+                  child: const Text('засах', style: TextStyle(color: Colors.blue),),
                 ),
               ],
             ),
@@ -56,7 +56,7 @@ Future<CategoryModel?> showCategorySelectorDialogByType({
                     .toList();
 
                 if (filteredCategories.isEmpty) {
-                  return const Center(child: Text("No categories"));
+                  return const Center(child: Text("Ангилал алга байна"));
                 }
 
                 return SizedBox(

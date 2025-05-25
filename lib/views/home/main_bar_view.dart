@@ -1,4 +1,6 @@
 import 'package:budgetfrontend/controllers/auth_controller.dart';
+import 'package:budgetfrontend/views/report/report_view.dart';
+import 'package:budgetfrontend/views/user/notification_view.dart';
 import 'package:budgetfrontend/views/user/profile_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,12 +9,14 @@ class MainBarView extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final VoidCallback onNotfPressed;
   final VoidCallback onProfilePressed;
+  final bool showChartIcon; // ШИНЭ параметр
 
   const MainBarView({
     super.key,
     required this.title,
     required this.onNotfPressed,
     required this.onProfilePressed,
+    this.showChartIcon = false, // default нь false
   });
 
   @override
@@ -26,7 +30,9 @@ class MainBarView extends StatelessWidget implements PreferredSizeWidget {
           padding: const EdgeInsets.only(top: 10),
           child: Row(
             children: [
-              const SizedBox(width: 6),
+             
+             
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,11 +48,17 @@ class MainBarView extends StatelessWidget implements PreferredSizeWidget {
                   ],
                 ),
               ),
+               if (showChartIcon) // зөвхөн true үед гаргана
+                IconCircleButton(
+                  iconData: Icons.show_chart,
+                  onPressed: () {Get.to(() => ReportView());},
+                ),
+              const SizedBox(width: 8),
               IconCircleButton(
                 iconData: Icons.notifications_none,
-                onPressed: () {},
+                onPressed: () {Get.to(() => NotificationPage());},
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 6),
               IconButton(
   onPressed: () {
     Get.to(() => ProfileView());
@@ -54,7 +66,7 @@ class MainBarView extends StatelessWidget implements PreferredSizeWidget {
   icon: Obx(() {
     final user = Get.find<AuthController>().user.value;
     return CircleAvatar(
-      radius: 18,
+      radius: 22,
       backgroundImage: user?.profilePhotoUrl != null
           ? NetworkImage(user!.profilePhotoUrl!)
           : const AssetImage("assets/img/default_profile.png") as ImageProvider,
@@ -99,7 +111,7 @@ class IconCircleButton extends StatelessWidget {
       child: IconButton(
         icon: Icon(iconData, color: const Color.fromARGB(255, 124, 123, 123)),
         onPressed: onPressed,
-        iconSize: size ?? 19,
+        iconSize: size ?? 22,
       ),
     );
   }

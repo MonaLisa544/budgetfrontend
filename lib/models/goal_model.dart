@@ -1,86 +1,103 @@
 class GoalModel {
-  final int id;
-  final String goalName;
-  final String goalType;
-  final String status;
-  final double targetAmount;
-  final double paidAmount;
-  final double remainingAmount;
-  final DateTime startDate;
-  final DateTime expectedDate;
-  final int monthlyDueDay;
-  final String description;
-  final double progressPercentage;
-  final int monthsLeft;
-  final String ownerType; // ✅ Flutter талд ownerType гэж нэрлэсэн
-  final int walletId; // ✅ relationships-с орж ирэх боломжтой
+  int? id;
+  String goalName;
+  String goalType;
+  String status;
+  double targetAmount;
+  double savedAmount;        // <-- "saved_amount"
+  String startDate;          // эсвэл DateTime startDate;
+  String expectedDate;       // эсвэл DateTime expectedDate;
+  int monthlyDueDay;
+  double monthlyDueAmount;
+  String description;
+  double remainingAmount;
+  int monthsLeft;
+  String walletType;
+  List<MonthlyStatus> monthlyStatuses; 
 
   GoalModel({
-    required this.id,
+    this.id,
     required this.goalName,
     required this.goalType,
-    required this.status,
+    this.status = "active",
     required this.targetAmount,
-    required this.paidAmount,
-    required this.remainingAmount,
+    this.savedAmount = 0,
     required this.startDate,
     required this.expectedDate,
     required this.monthlyDueDay,
+    this.monthlyDueAmount = 0,
     required this.description,
-    required this.progressPercentage,
-    required this.monthsLeft,
-    required this.ownerType,
-    required this.walletId,
+    this.remainingAmount = 0,
+    this.monthsLeft = 0,
+    required this.walletType,
+    this.monthlyStatuses = const [],
   });
 
-  /// 🎯 Backend-с ирэх JSON-оос GoalModel үүсгэх
- factory GoalModel.fromJson(Map<String, dynamic> json) {
-  final attributes = json['attributes'] ?? {};
-  final relationships = json['relationships'] ?? {};
-
-  double parseDouble(dynamic value) {
-    if (value is int) return value.toDouble();
-    if (value is double) return value;
-    if (value is String) return double.tryParse(value) ?? 0.0;
-    return 0.0;
+  factory GoalModel.fromJson(Map<String, dynamic> json) {
+    final attr = json['attributes'] ?? json;
+     final monthlyStatusesJson = attr['monthly_statuses'] ?? attr['monthlyStatuses'] ?? [];
+    return GoalModel(
+      id: int.tryParse(json['id']?.toString() ?? '') ?? attr['id'],
+      goalName: attr['goal_name'] ?? '',
+      goalType: attr['goal_type'] ?? '',
+      status: attr['status'] ?? '',
+      targetAmount: double.tryParse(attr['target_amount'].toString()) ?? 0,
+      savedAmount: double.tryParse(attr['saved_amount'].toString()) ?? 0,
+      startDate: attr['start_date'] ?? '',
+      expectedDate: attr['expected_date'] ?? '',
+      monthlyDueDay: attr['monthly_due_day'] is int
+          ? attr['monthly_due_day']
+          : int.tryParse(attr['monthly_due_day'].toString()) ?? 1,
+      monthlyDueAmount: double.tryParse(attr['monthly_due_amount'].toString()) ?? 0,
+      description: attr['description'] ?? '',
+      remainingAmount: double.tryParse(attr['remaining_amount']?.toString() ?? '0') ?? 0,
+      monthsLeft: attr['months_left'] is int
+          ? attr['months_left']
+          : int.tryParse(attr['months_left']?.toString() ?? '0') ?? 0,
+      walletType: attr['wallet_type'] ?? '',
+      monthlyStatuses: monthlyStatusesJson is List
+          ? monthlyStatusesJson.map((e) => MonthlyStatus.fromJson(e)).toList()
+          : [],
+    );
   }
 
-  return GoalModel(
-    id: int.tryParse(json['id'].toString()) ?? 0, // 🔥 root-с id
-    goalName: attributes['goal_name'] ?? '',
-    goalType: attributes['goal_type'] ?? '',
-    status: attributes['status'] ?? '',
-    targetAmount: parseDouble(attributes['target_amount']),
-    paidAmount: parseDouble(attributes['paid_amount']),
-    remainingAmount: parseDouble(attributes['remaining_amount']),
-    startDate: DateTime.tryParse(attributes['start_date'] ?? '') ?? DateTime.now(),
-    expectedDate: DateTime.tryParse(attributes['expected_date'] ?? '') ?? DateTime.now(),
-    monthlyDueDay: attributes['monthly_due_day'] ?? 1, // Чиний API-д monthly_due_day байна уу шалгаарай
-    description: attributes['description'] ?? '',
-    progressPercentage: parseDouble(attributes['progress_percentage']),
-    monthsLeft: attributes['months_left'] ?? 0,
-    ownerType: attributes['owner_type'] ?? '',  // 🔥 owner_type-г attributes-с авна
-    walletId: int.tryParse(relationships['wallet']?['data']?['id']?.toString() ?? '0') ?? 0,
-  );
+  Map<String, dynamic> toJson() => {
+        'goal_name': goalName,
+        'goal_type': goalType,
+        'status': status,
+        'target_amount': targetAmount,
+        'saved_amount': savedAmount,
+        'start_date': startDate,
+        'expected_date': expectedDate,
+        'monthly_due_day': monthlyDueDay,
+        'monthly_due_amount': monthlyDueAmount,
+        'description': description,
+        // 'remaining_amount': remainingAmount,
+        // 'months_left': monthsLeft,
+        'wallet_type': walletType,
+      };
 }
 
-  /// 🎯 Flutter-аас backend руу явуулах JSON
-  Map<String, dynamic> toJson() {
-    return {
-      "goal_name": goalName,
-      "goal_type": goalType,
-      "status": status,
-      "target_amount": targetAmount,
-      "paid_amount": paidAmount,
-      "remaining_amount": remainingAmount,
-      "start_date": startDate.toIso8601String(),
-      "expected_date": expectedDate.toIso8601String(),
-      "monthly_due_day": monthlyDueDay,
-      "description": description,
-      "progress_percentage": progressPercentage,
-      "months_left": monthsLeft,
-      "type": ownerType, // ✅ ownerType-г "type" гэж явуулна
-      // "wallet_id": walletId, --> create үед wallet_id backend авдаггүй бол хасаарай
-    };
+// Тусдаа MonthlyStatus model:
+class MonthlyStatus {
+  int id;
+  String month;
+  String status; // pending, success, fail
+  double paidAmount;
+
+  MonthlyStatus({
+    required this.id,
+    required this.month,
+    required this.status,
+    required this.paidAmount,
+  });
+
+  factory MonthlyStatus.fromJson(Map<String, dynamic> json) {
+    return MonthlyStatus(
+      id: json['id'],
+      month: json['month'],
+      status: json['status'],
+      paidAmount: double.tryParse(json['paid_amount']?.toString() ?? '0') ?? 0,
+    );
   }
 }

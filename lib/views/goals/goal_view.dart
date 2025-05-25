@@ -5,6 +5,8 @@ import 'package:get/get.dart';
 import 'package:budgetfrontend/controllers/goal_controller.dart';
 import 'package:budgetfrontend/views/goals/add_goal_view.dart';
 import 'package:budgetfrontend/views/home/main_bar_view.dart';
+import 'package:intl/intl.dart';
+
 
 class GoalView extends StatefulWidget {
   const GoalView({super.key});
@@ -36,7 +38,7 @@ void initState() {
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: MainBarView(
-          title: 'Plans',
+          title: 'Зорилго',
           onProfilePressed: () {},
           onNotfPressed: () {},
         ),
@@ -86,7 +88,7 @@ void initState() {
                             children: [
                               if (selectedTabIndex.value == 0) Icon(Icons.check, size: 16),
                               if (selectedTabIndex.value == 0) const SizedBox(width: 4),
-                              const Text('Saving'),
+                              const Text('Хадгаламж'),
                             ],
                           ),
                         ),
@@ -96,7 +98,7 @@ void initState() {
                             children: [
                               if (selectedTabIndex.value == 1) Icon(Icons.check, size: 16),
                               if (selectedTabIndex.value == 1) const SizedBox(width: 4),
-                              const Text('Loan'),
+                              const Text('Зээл'),
                             ],
                           ),
                         ),
@@ -112,12 +114,12 @@ void initState() {
                     // const SizedBox(height: 10),
                     if (selectedWallet.value == 'Saving') ...[
                       GoalSection(
-   title: 'Private',
-   goals: goalController.goals.where((g) => g.goalType == 'saving' && g.ownerType == 'User').toList(),
+   title: 'Хувийн хадгаламж',
+   goals: goalController.goals.where((g) => g.goalType == 'saving' && g.walletType == 'private').toList(),
  ),
  GoalSection(
-   title: 'Family',
-   goals: goalController.goals.where((g) => g.goalType == 'saving' && g.ownerType == 'Family').toList(),
+   title: 'Гэр бүлийн хадгаламж',
+   goals: goalController.goals.where((g) => g.goalType == 'saving' && g.walletType == 'family').toList(),
  ),
                       const SizedBox(height: 16),
                       AddGoalDashedBox(onTap: () {
@@ -125,12 +127,12 @@ void initState() {
                       }),
                     ] else ...[
                        GoalSection(
-   title: 'Private',
-   goals: goalController.goals.where((g) => g.goalType == 'loan' && g.ownerType == 'User').toList(),
+   title: 'Хувийн зээл',
+   goals: goalController.goals.where((g) => g.goalType == 'loan' && g.walletType == 'private').toList(),
  ),
  GoalSection(
-   title: 'Family',
-   goals: goalController.goals.where((g) => g.goalType == 'loan' && g.ownerType == 'Family').toList(),
+   title: 'Гэр бүлийн зээл',
+   goals: goalController.goals.where((g) => g.goalType == 'loan' && g.walletType == 'family').toList(),
  ),
                       const SizedBox(height: 16),
                       AddGoalDashedBox(onTap: () {
@@ -247,7 +249,7 @@ class GoalSection extends StatelessWidget {
       collapsedBackgroundColor: const Color.fromARGB(255, 148, 156, 176).withOpacity(0.3),
       backgroundColor: const Color.fromARGB(255, 147, 168, 196).withOpacity(0.1),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      children: goals.map((goal) => GoalRow(title: goal.goalName, totalAmount: goal.targetAmount, savedAmount: goal.paidAmount, goal:goal)).toList(),
+      children: goals.map((goal) => GoalRow(title: goal.goalName, totalAmount: goal.targetAmount, savedAmount: goal.savedAmount, goal:goal, statuses: goal.monthlyStatuses.map((e) => e.status).toList().cast<String>(),)).toList(),
     );
   }
 }
@@ -280,16 +282,19 @@ class LoanSection extends StatelessWidget {
       collapsedBackgroundColor: const Color.fromARGB(255, 106, 115, 138).withOpacity(0.3),
       backgroundColor: const  Color.fromARGB(255, 147, 168, 196).withOpacity(0.1),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      children: loans.map((loan) => GoalRow(title: loan.loanName, totalAmount: loan.totalAmountDue, savedAmount: loan.paidAmount,  goal:loan,)).toList(),
+      children: loans.map((loan) => GoalRow(title: loan.loanName, totalAmount: loan.totalAmountDue, savedAmount: loan.savedAmount,  goal:loan, statuses: loan.monthlyStatuses.map((e) => e.status).toList().cast<String>(),)).toList(),
     );
   }
 }
+
 
 class GoalRow extends StatelessWidget {
   final String title;
   final double totalAmount;
   final double savedAmount;
   final dynamic goal; // 🔥 GoalModel object-оо авч явна!
+    final List<String> statuses;
+  
 
   const GoalRow({
     super.key,
@@ -297,6 +302,7 @@ class GoalRow extends StatelessWidget {
     required this.totalAmount,
     required this.savedAmount,
     required this.goal, // ✅ нэмлээ
+    required this.statuses,
   });
 
   @override
@@ -337,7 +343,7 @@ class GoalRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'Goal',
+                  'Зорилго',
                   style: TextStyle(color: Colors.white70, fontSize: 12),
                 ),
                 const SizedBox(height: 8),
@@ -359,10 +365,11 @@ class GoalRow extends StatelessWidget {
                         color: Colors.blueAccent.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: Text(
-                        "\$$totalAmount",
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-                      ),
+                     child: Text(
+  formatCurrency(totalAmount),
+  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+),
+
                     ),
                     Text(
                       "March/April '24",
@@ -375,32 +382,30 @@ class GoalRow extends StatelessWidget {
                   text: TextSpan(
                     children: [
                       const TextSpan(
-                        text: 'Save ',
+                        text: 'Сар бүр ',
                         style: TextStyle(color: Colors.white),
                       ),
-                      TextSpan(
-                        text: '\$${monthlySaving.toStringAsFixed(0)} ',
-                        style: const TextStyle(
-                          color: Colors.greenAccent,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                     TextSpan(
+  text: '${formatCurrency(monthlySaving)} ',
+  style: const TextStyle(
+    color: Colors.greenAccent,
+    fontWeight: FontWeight.bold,
+  ),
+),
                       const TextSpan(
-                        text: 'a month ',
+                        text: 'төлнө ',
                         style: TextStyle(color: Colors.white),
                       ),
                       TextSpan(
-                        text: '($monthsLeft months left)',
+                        text: '($monthsLeft сарын турш)',
                         style: const TextStyle(color: Colors.white60, fontSize: 12),
                       ),
                     ],
                   ),
                 ),
                 const SizedBox(height: 12),
-                SmoothProgressBar(
-                  totalSteps: 8,
-                  completedSteps: 5,
-                ),
+                // SmoothProgressBar(statuses: statuses),
+                SmoothProgressBar(totalSteps: 7, completedSteps: 5,),
               ],
             ),
           ),
@@ -436,7 +441,7 @@ class AddGoalDashedBox extends StatelessWidget {
               children: [
                 Icon(Icons.add_circle_outline, color: Colors.white70, size: 32),
                 SizedBox(height: 8),
-                Text('Add new goal', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                Text('Шинэ зорилго нэмэх', style: TextStyle(color: Colors.white70, fontSize: 14)),
               ],
             ),
           ),
@@ -520,6 +525,108 @@ class SmoothProgressBar extends StatelessWidget {
   }
 }
 
+// class SmoothProgressBar extends StatelessWidget {
+//   final List<String> statuses; // ['success', 'pending', 'fail', ...]
+
+//   const SmoothProgressBar({
+//     super.key,
+//     required this.statuses,
+//   });
+
+//   @override
+//   Widget build(BuildContext context) {
+//     int totalSteps = statuses.length;
+//     int completedSteps = statuses
+//         .where((status) => status == 'success' || status == 'fail')
+//         .length;
+
+//     return SizedBox(
+//       height: 40,
+//       child: Stack(
+//         alignment: Alignment.centerLeft,
+//         children: [
+//           // Background line (full width, scrollable)
+//           ListView.builder(
+//             scrollDirection: Axis.horizontal,
+//             physics: const BouncingScrollPhysics(),
+//             itemCount: 1,
+//             itemBuilder: (context, _) {
+//               return Container(
+//                 width: totalSteps * 30, // багана тутамд 30px
+//                 height: 4,
+//                 decoration: BoxDecoration(
+//                   color: Colors.blue.shade900,
+//                   borderRadius: BorderRadius.circular(2),
+//                 ),
+//               );
+//             },
+//             shrinkWrap: true,
+//           ),
+//           // Completed line (success + fail, scrollable)
+//           Positioned.fill(
+//             child: Align(
+//               alignment: Alignment.centerLeft,
+//               child: FractionallySizedBox(
+//                 widthFactor: totalSteps == 0 ? 0 : completedSteps / totalSteps,
+//                 child: Container(
+//                   height: 4,
+//                   width: totalSteps * 30,
+//                   decoration: BoxDecoration(
+//                     color: Colors.cyanAccent,
+//                     borderRadius: BorderRadius.circular(2),
+//                   ),
+//                 ),
+//               ),
+//             ),
+//           ),
+//           // Circles (scrollable)
+//           ListView.builder(
+//             scrollDirection: Axis.horizontal,
+//             physics: const BouncingScrollPhysics(),
+//             itemCount: totalSteps,
+//             itemBuilder: (context, index) {
+//               final status = statuses[index];
+//               bool isCompleted = status == 'success' || status == 'fail';
+//               return Container(
+//                 width: 30,
+//                 alignment: Alignment.center,
+//                 child: Stack(
+//                   alignment: Alignment.center,
+//                   children: [
+//                     if (isCompleted)
+//                       Container(
+//                         width: 24,
+//                         height: 24,
+//                         decoration: BoxDecoration(
+//                           shape: BoxShape.circle,
+//                           color: Colors.cyanAccent.withOpacity(0.2),
+//                         ),
+//                       ),
+//                     Container(
+//                       width: isCompleted ? 12 : 8,
+//                       height: isCompleted ? 12 : 8,
+//                       decoration: BoxDecoration(
+//                         color: isCompleted
+//                             ? (status == 'success'
+//                                 ? Colors.greenAccent
+//                                 : Colors.redAccent)
+//                             : Colors.blue.shade900,
+//                         shape: BoxShape.circle,
+//                         border: Border.all(color: Colors.white24, width: 1),
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               );
+//             },
+//             shrinkWrap: true,
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+// }
+
 class DashedBorderPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -556,4 +663,11 @@ class DashedBorderPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(CustomPainter oldDelegate) => false;
+}
+
+String formatCurrency(double value, {bool symbolFirst = true}) {
+  final formatter = NumberFormat("#,##0", "mn");
+  return symbolFirst
+      ? "₮ ${formatter.format(value)}"
+      : "${formatter.format(value)} ₮";
 }

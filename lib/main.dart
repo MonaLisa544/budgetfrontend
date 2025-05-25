@@ -1,14 +1,14 @@
 import 'dart:convert';
 
-import 'package:budgetfrontend/services/auth_service.dart';
+import 'package:budgetfrontend/controllers/transaction_controller.dart';
 import 'package:budgetfrontend/widgets/common/color_extension.dart';
 import 'package:budgetfrontend/views/login/sign_in_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 void main() {
+   Get.put(TransactionController());
   runApp(const MyApp());
 }
 

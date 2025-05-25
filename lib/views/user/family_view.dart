@@ -13,7 +13,7 @@ class FamilyScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: const Color.fromARGB(255, 235, 245, 255),
-      appBar: BackAppBar(title: 'Family'),
+      appBar: BackAppBar(title: 'Гэр бүл'),
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -75,7 +75,7 @@ class FamilyScreen extends StatelessWidget {
                     }),
                   ),
                   const SizedBox(height: 20),
-                  Text("Manage family", style: TextStyle(fontSize: 16),),
+                  Text("Гэр бүлийг удирдах", style: TextStyle(fontSize: 16),),
                    const SizedBox(height: 10),
                   // 📦 Цагаан box Manage Family хэсэг
                   Container(
@@ -95,7 +95,7 @@ class FamilyScreen extends StatelessWidget {
                       children: [
                         _FamilyTile(
                           icon: Icons.edit,
-                          text: 'Edit Family Name',
+                          text: 'Гэр бүлийн нэрийг засах',
                           onTap: () {
                             print('Edit Family Name');
                           },
@@ -103,7 +103,7 @@ class FamilyScreen extends StatelessWidget {
                         const Divider(height: 1),
                         _FamilyTile(
                           icon: Icons.lock_outline,
-                          text: 'Change Password',
+                          text: 'Нууц үг солих',
                           onTap: () {
                             print('Change Password');
                           },
@@ -111,7 +111,7 @@ class FamilyScreen extends StatelessWidget {
                         const Divider(height: 1),
                         _FamilyTile(
   icon: Icons.exit_to_app,
-  text: 'Leave Family',
+  text: 'Гэр бүлээс гарах ',
   color: Colors.red, // ✅ Ингэж улаан болгоно
   onTap: () {
     print('Leave Family');

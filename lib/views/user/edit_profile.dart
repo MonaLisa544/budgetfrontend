@@ -189,11 +189,12 @@ class _EditProfileViewState extends State<EditProfileView> {
     child: Column(
       children: [
         SizedBox(height: 15),
-        _buildTextField(controller: firstNameController, label: "First Name"),
+        _buildTextField(controller: lastNameController, label: "Овог"),
         const SizedBox(height: 12),
-        _buildTextField(controller: lastNameController, label: "Last Name"),
+        _buildTextField(controller: firstNameController, label: "Нэр"),
         const SizedBox(height: 12),
-        _buildTextField(controller: emailController, label: "Email"),
+        
+        _buildTextField(controller: emailController, label: "Мэйл хаяг"),
         const SizedBox(height: 10),
         Align(
   alignment: Alignment.centerLeft,
@@ -203,7 +204,7 @@ class _EditProfileViewState extends State<EditProfileView> {
 },
 
     child: Text(
-      "password change",
+      "нууц үг солих",
       style: TextStyle(
         color: Colors.blue.withOpacity(0.8),
         decoration: TextDecoration.underline,
@@ -224,7 +225,7 @@ class _EditProfileViewState extends State<EditProfileView> {
     ),
   ),
   child: const Text(
-    'Save',
+    'Хадгалах',
     style: TextStyle(fontSize: 16),
   ),
 ),
@@ -239,7 +240,7 @@ OutlinedButton(
     ),
   ),
   child: const Text(
-    'Cancel',
+    'Цуцлах',
     style: TextStyle(color: Colors.blue, fontSize: 16),
   ),
 ),

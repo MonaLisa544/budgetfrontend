@@ -1,6 +1,8 @@
 import 'package:budgetfrontend/controllers/transaction_controller.dart';
 import 'package:budgetfrontend/models/category_model.dart';
+import 'package:budgetfrontend/models/goal_model.dart';
 import 'package:budgetfrontend/models/transaction_model.dart';
+import 'package:budgetfrontend/views/goals/goal_selecter_dialog.dart';
 import 'package:budgetfrontend/views/home/back_app_bar.dart';
 import 'package:budgetfrontend/views/transactions/category_selecter_dialog.dart';
 import 'package:flutter/material.dart';
@@ -24,47 +26,93 @@ class AddTransactionView extends StatefulWidget {
   @override
   State<AddTransactionView> createState() => _AddTransactionViewState();
 }
+String translateType(String type) {
+  switch (type) {
+    case 'income':
+      return 'орлого';
+    case 'expense':
+      return 'зарлага';
+    default:
+      return type;
+  }
+}
+
+String capitalize(String s) {
+  if (s.isEmpty) return s;
+  return s[0].toUpperCase() + s.substring(1);
+}
 
 class _AddTransactionViewState extends State<AddTransactionView> {
   bool showMoreFields = false;
-  final transactionController = Get.put(TransactionController());
-  List<CategoryModel> categoryList = [];
+  final transactionController = Get.find<TransactionController>();
+
+  // List<CategoryModel> categoryList = [];
   CategoryModel? selectedCategory;
   final _formKey = GlobalKey<FormState>();
   final amountController = TextEditingController();
   final nameController = TextEditingController();
   DateTime selectedDate = DateTime.now();
   bool isPaid = true;
-  final List<String> accounts = ['Family Wallet', 'Private Wallet'];
-  String selectedAccount = 'Private Wallet';
+  final List<String> accounts = ['Гэр бүлийн данс', 'Хувийн данс'];
+  String selectedAccount = 'Хувийн данс';
     bool showNoteField = false; // ✅ More дээр дарсан эсэх
   final TextEditingController noteController = TextEditingController();
   String? categoryError; // 🎯
+  GoalModel? selectedGoal;
+   String? goalError; // 🎯
+   bool get isGoalCategory => 
+    selectedCategory?.categoryName.toLowerCase() == 'зээл' ||
+    selectedCategory?.categoryName.toLowerCase() == 'хадгаламж';
 
+  
+@override
+void initState() {
+  super.initState();
 
-  @override
-  void initState() {
-    super.initState();
+  // ✅ Зөв: addListener-г үргэлж ажиллуулна!
+  amountController.addListener(_onAmountChanged);
 
-    if (widget.editTransaction != null) {
-      // 🔥 Өмнө бөглөгдсөн утгуудыг оруулах
-      amountController.text =
-          widget.editTransaction!.transactionAmount.toString();
-      nameController.text = widget.editTransaction!.transactionName;
-      selectedDate = DateTime.parse(widget.editTransaction!.transactionDate);
-      selectedCategory = widget.editTransaction!.category;
-      isPaid = true; // example
-    }
+  if (widget.editTransaction != null) {
+    // Хуучин дүнг автоматаар форматтай оруулна
+    amountController.text = NumberFormat("#,##0", "mn").format(widget.editTransaction!.transactionAmount);
+    nameController.text = widget.editTransaction!.transactionName;
+    selectedDate = DateTime.parse(widget.editTransaction!.transactionDate);
+    selectedCategory = widget.editTransaction!.category;
+    isPaid = true; // example
   }
+}
+
+void _onAmountChanged() {
+  String text = amountController.text.replaceAll(RegExp(r'[^\d]'), '');
+  if (text.isEmpty) {
+    amountController.value = TextEditingValue(
+      text: '',
+      selection: const TextSelection.collapsed(offset: 0),
+    );
+  } else {
+    final formatter = NumberFormat("#,##0", "mn");
+    final newText = formatter.format(int.parse(text));
+    amountController.value = TextEditingValue(
+      text: newText,
+      selection: TextSelection.collapsed(offset: newText.length),
+    );
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
+    final typeLabel = capitalize(translateType(widget.type));
+    // final bool isGoalCategory = selectedCategory?.categoryName.toLowerCase() == 'goal';
     return Scaffold(
       appBar: BackAppBar(
         title:
-            widget.editTransaction != null
-                ? 'Edit ${widget.type}'
-                : 'Add ${widget.type}',
+           (
+ widget.editTransaction != null
+    ? '$typeLabel засах'
+    : '$typeLabel үүсгэх'
+)
+
       ),
       backgroundColor: Colors.white,
       body: BlueTextFieldTheme(
@@ -76,21 +124,28 @@ class _AddTransactionViewState extends State<AddTransactionView> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
               FloatingLabelContainer(
-  label: 'Category (${widget.type})',
+  label: 'Ангилал (${widget.editTransaction != null
+    ? '$typeLabel'
+    : '$typeLabel'})',
   child: InkWell(
-    onTap: () async {
-      final selected = await showCategorySelectorDialogByType(
-        context: context,
-        type: widget.type,
-        selectedCategory: selectedCategory,
-      );
-      if (selected != null) {
-        setState(() {
-          selectedCategory = selected;
-          categoryError = null; // ✅ Сонгочихвол алдааг арилгана
-        });
-      }
-    },
+   onTap: () async {
+  final selected = await showCategorySelectorDialogByType(
+    context: context,
+    type: widget.type,
+    selectedCategory: selectedCategory,
+  );
+  if (selected != null) {
+    setState(() {
+      // ⚡️ Сонгосон category-г шинэчилнэ
+      selectedCategory = selected;
+      categoryError = null;
+
+      // ⚡️ Category өөрчлөгдөх бүрт Goal-ыг always null болго!
+      selectedGoal = null;
+      goalError = null;
+    });
+  }
+},
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -113,7 +168,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  selectedCategory?.categoryName ?? "Choose category",
+                  selectedCategory?.categoryName ?? "Ангилал сонгох",
                   style: TextStyle(
                     color: selectedCategory == null ? Colors.grey : Colors.black,
                   ),
@@ -139,12 +194,80 @@ class _AddTransactionViewState extends State<AddTransactionView> {
   ),
 ),
 
-                const SizedBox(height: 16),
-               TextFormField(
+               
+                if (isGoalCategory) ...[
+  const SizedBox(height: 16),
+  FloatingLabelContainer(
+    label: 'Зорилго (${selectedCategory?.categoryName })',
+    child: InkWell(
+      onTap: () async {
+        final selected = await showGoalSelectorDialogByType(
+          context: context,
+          type: selectedCategory?.categoryName.toLowerCase() ?? '', // "saving" эсвэл "loan"
+          selectedGoal: selectedGoal,
+        );
+        if (selected != null) {
+          setState(() {
+            selectedGoal = selected;
+            goalError = null;
+          });
+        }
+      },
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: goalError != null
+                    ? const Color.fromARGB(255, 175, 47, 38)
+                    : Colors.grey.shade400,
+              ),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.flag,
+                  color: selectedGoal != null ? Colors.green : Colors.grey,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    selectedGoal?.goalName ?? "Зорилго сонгох",
+                    style: TextStyle(
+                      color: selectedGoal == null ? Colors.grey : Colors.black,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.arrow_drop_down),
+              ],
+            ),
+          ),
+          if (goalError != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 12, top: 5),
+              child: Text(
+                goalError!,
+                style: const TextStyle(
+                  color: Color.fromARGB(255, 187, 50, 40),
+                  fontSize: 12,
+                ),
+              ),
+            ),
+        ],
+      ),
+    ),
+  ),
+],
+ const SizedBox(height: 16),
+
+TextFormField(
   controller: amountController,
   keyboardType: TextInputType.number,
   decoration: InputDecoration(
-    labelText: 'Amount',
+    labelText: 'Үнийн дүн',
     contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
     labelStyle: const TextStyle(
       color: Colors.grey,
@@ -153,6 +276,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
       color: Colors.grey,
       fontWeight: FontWeight.bold,
     ),
+    prefix: const Text('₮ ', style: TextStyle(fontWeight: FontWeight.bold)),
     suffixIcon: Padding(
       padding: const EdgeInsets.only(right: 12),
       child: Icon(
@@ -161,10 +285,8 @@ class _AddTransactionViewState extends State<AddTransactionView> {
         color: Colors.blueGrey,
       ),
     ),
-    
-    // 🎯 Эдгээрийг нэмнэ:
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(20), // Булангуудыг дугуйруулна
+      borderRadius: BorderRadius.circular(20),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(20),
@@ -176,15 +298,14 @@ class _AddTransactionViewState extends State<AddTransactionView> {
     ),
   ),
    validator: (value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Please enter amount';
-    }
-    if (double.tryParse(value) == null || double.parse(value) <= 0) {
-      return 'Enter a valid amount';
+    final onlyDigits = value?.replaceAll(RegExp(r'[^\d]'), '') ?? '';
+    if (onlyDigits.isEmpty || double.tryParse(onlyDigits) == null || double.parse(onlyDigits) <= 0) {
+      return 'Боломжгүй үнийн дүн байна';
     }
     return null;
   },
 ),
+
 
                 const SizedBox(height: 16),
         DropdownButtonFormField<String>(
@@ -195,7 +316,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
   dropdownColor: Colors.white,
   borderRadius: BorderRadius.circular(16),
   decoration: InputDecoration(
-    labelText: 'Account',
+    labelText: 'Данс',
     floatingLabelStyle: const TextStyle(
       color: Colors.black38,
       fontWeight: FontWeight.bold,
@@ -271,7 +392,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
 
                 const SizedBox(height: 10),
               FloatingLabelContainer(
-  label: 'Date',
+  label: 'Гүйлгээ хийсэн огноо',
   child: InkWell(
     onTap: pickDate,
     borderRadius: BorderRadius.circular(20), // ✅ InkWell даралт бас зөөлөн болно
@@ -307,9 +428,9 @@ class _AddTransactionViewState extends State<AddTransactionView> {
                 const SizedBox(height: 16),
                    TextFormField(
   controller: nameController,
-  keyboardType: TextInputType.number,
+  keyboardType: TextInputType.text,
   decoration: InputDecoration(
-    labelText: 'Name',
+    labelText: 'Гүйлгээний нэр',
     contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
     labelStyle: const TextStyle(
       color: Colors.grey,
@@ -334,7 +455,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
   ),
    validator: (value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Please enter name';
+      return 'Нэр оруулна уу!'; 
     }
     return null;
   },
@@ -351,7 +472,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
                              mainAxisSize: MainAxisSize.min,
                              children: [
                                const Text(
-                  "MORE",
+                  "Цааш",
                   style: TextStyle(color: Colors.blue),
                                ),
                                const SizedBox(width: 4),
@@ -373,7 +494,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
   maxLines: 5,
   keyboardType: TextInputType.multiline,
   decoration: InputDecoration(
-    labelText: 'Notes', // 🎯 LabelText ашиглана
+    labelText: 'Тайлбар', // 🎯 LabelText ашиглана
     floatingLabelBehavior: FloatingLabelBehavior.auto, // 🎯 Auto дээш хөөрдөг
     labelStyle: TextStyle(
       color: Colors.grey.shade400,
@@ -409,7 +530,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
 
   if (selectedCategory == null) {
     setState(() {
-      categoryError = 'Please choose a category';
+      categoryError = 'Ангилал сонгоно уу!';
     });
     isValid = false;
   } else {
@@ -419,11 +540,14 @@ class _AddTransactionViewState extends State<AddTransactionView> {
   }
 
   if (isValid) {
-    final walletType = selectedAccount == 'Family Wallet' ? 'family' : 'private';
+    final walletType = selectedAccount == 'Гэр бүлийн данс' ? 'family' : 'private';
 
     final txn = TransactionModel(
       transactionName: nameController.text.trim(),
-      transactionAmount: double.tryParse(amountController.text.trim()) ?? 0.0,
+      transactionAmount: double.tryParse(
+  amountController.text.replaceAll(RegExp(r'[^\d]'), '')
+) ?? 0.0,
+
       transactionDate: DateFormat('yyyy-MM-dd').format(selectedDate),
       categoryId: selectedCategory!.id!,
       walletType: walletType,
@@ -446,7 +570,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
                     backgroundColor: Colors.blue,
                   ),
                   child: Text(
-                    widget.editTransaction != null ? "Update" : "Create",
+                    widget.editTransaction != null ? "Засах " : "Үүсгэх",
                   ),
                 ),
                 SizedBox(height: 10),
@@ -463,7 +587,7 @@ class _AddTransactionViewState extends State<AddTransactionView> {
                     ),
                   ),
                   child: const Text(
-                    'Cancel',
+                    'Цуцлах',
                     style: TextStyle(color: Colors.blue),
                   ),
                 ),
@@ -562,4 +686,15 @@ class FloatingLabelContainer extends StatelessWidget {
       ],
     );
   }
+}
+
+
+String formatCurrency(String value) {
+  if (value.isEmpty) return "₮ 0";
+  // Бүх non-digit тэмдэгтийг авна
+  final onlyDigits = value.replaceAll(RegExp(r'[^\d]'), '');
+  if (onlyDigits.isEmpty) return "₮ 0";
+  final number = int.parse(onlyDigits);
+  final formatter = NumberFormat("#,##0", "mn");
+  return "₮ ${formatter.format(number)}";
 }

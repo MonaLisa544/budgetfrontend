@@ -61,12 +61,13 @@ class GoalDetailContent extends StatelessWidget {
                   _buildDetailRow("Төрөл:", goal.goalType.capitalize ?? ''),
                   _buildDetailRow("Статус:", goal.status.capitalize ?? ''),
                   _buildDetailRow("Нийт зорилт:", "${goal.targetAmount.toStringAsFixed(2)}₮"),
-                  _buildDetailRow("Биелүүлсэн:", "${goal.paidAmount.toStringAsFixed(2)}₮"),
+                  _buildDetailRow("Биелүүлсэн:", "${goal.savedAmount.toStringAsFixed(2)}₮"),
                   _buildDetailRow("Үлдэгдэл:", "${goal.remainingAmount.toStringAsFixed(2)}₮"),
-                  _buildDetailRow("Эхлэх огноо:", DateFormat('yyyy-MM-dd').format(goal.startDate)),
-                  _buildDetailRow("Дуусах огноо:", DateFormat('yyyy-MM-dd').format(goal.expectedDate)),
+                 _buildDetailRow("Эхлэх огноо", DateFormat('yyyy-MM-dd').format(DateTime.parse(goal.startDate))),
+_buildDetailRow("Дуусах огноо", DateFormat('yyyy-MM-dd').format(DateTime.parse(goal.expectedDate))),
+
                   _buildDetailRow("Тайлбар:", goal.description.isNotEmpty ? goal.description : "—"),
-                  _buildDetailRow("Хэтэвч:", goal.ownerType == 'Family' ? "Family Wallet" : "Private Wallet"),
+                  _buildDetailRow("Хэтэвч:", goal.walletType == 'family' ? "Family Wallet" : "Private Wallet"),
 
                   const SizedBox(height: 15),
 

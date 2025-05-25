@@ -86,7 +86,7 @@ class _SignUpViewState extends State<SignUpView> {
                           delay: 1,
                           child: Container(
                             child: Text(
-                              "Create your account",
+                              "Бүртгэл үүсгэх",
                               style: TextStyle(
                                   color: Colors.white.withOpacity(0.9),
                                   letterSpacing: 0.5),
@@ -125,7 +125,7 @@ class _SignUpViewState extends State<SignUpView> {
                                       : deaible,
                                   size: 20,
                                 ),
-                                hintText: 'Last Name',
+                                hintText: 'Овог',
                                 hintStyle: TextStyle(
                                     color: selected == FormData.lastName
                                         ? enabledtxt
@@ -174,7 +174,7 @@ class _SignUpViewState extends State<SignUpView> {
                                       : deaible,
                                   size: 20,
                                 ),
-                                hintText: 'First Name',
+                                hintText: 'Нэр',
                                 hintStyle: TextStyle(
                                     color: selected == FormData.firstName
                                         ? enabledtxt
@@ -223,7 +223,7 @@ class _SignUpViewState extends State<SignUpView> {
                                       : deaible,
                                   size: 20,
                                 ),
-                                hintText: 'Email',
+                                hintText: 'Мэйл хаяг',
                                 hintStyle: TextStyle(
                                     color: selected == FormData.email
                                         ? enabledtxt
@@ -290,7 +290,7 @@ class _SignUpViewState extends State<SignUpView> {
                                     onPressed: () => setState(
                                         () => ispasswordev = !ispasswordev),
                                   ),
-                                  hintText: 'Password',
+                                  hintText: 'Нууц үг',
                                   hintStyle: TextStyle(
                                       color: selected == FormData.password
                                           ? enabledtxt
@@ -359,7 +359,7 @@ class _SignUpViewState extends State<SignUpView> {
                                     onPressed: () => setState(
                                         () => ispasswordev = !ispasswordev),
                                   ),
-                                  hintText: 'Confirm Password',
+                                  hintText: 'Нууц үг баталгаажуулах',
                                   hintStyle: TextStyle(
                                       color:
                                           selected == FormData.passwordConfirmation
@@ -409,7 +409,7 @@ class _SignUpViewState extends State<SignUpView> {
                                       borderRadius:
                                           BorderRadius.circular(12.0))),
                               child: Text(
-                                "Sign Up",
+                                "Бүртгүүлэх",
                                 style: TextStyle(
                                   color: Colors.white,
                                   letterSpacing: 0.5,
@@ -435,7 +435,7 @@ class _SignUpViewState extends State<SignUpView> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text("If you have an account ",
+                      const Text("Хэрэв та бүртгэлтэй бол  ",
                           style: TextStyle(
                             color: Colors.grey,
                             letterSpacing: 0.5,
@@ -448,7 +448,7 @@ class _SignUpViewState extends State<SignUpView> {
                             return SignInView();
                           }));
                         },
-                        child: Text("Sing in",
+                        child: Text("Нэвтрэх",
                             style: TextStyle(
                                 color: Colors.white.withOpacity(0.9),
                                 fontWeight: FontWeight.bold,

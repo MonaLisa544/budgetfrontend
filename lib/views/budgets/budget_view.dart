@@ -9,18 +9,26 @@ import 'package:budgetfrontend/widgets/dual_arc_painter.dart';
 import 'package:budgetfrontend/views/budgets/add_budget_view.dart';
 import 'dart:ui';
 
-class BudgetView extends StatelessWidget {
-  BudgetView({super.key});
+import 'package:intl/intl.dart';
 
+
+class BudgetView extends StatefulWidget {
+  const BudgetView({super.key});
+
+  @override
+  State<BudgetView> createState() => _BudgetViewState();
+}
+
+class _BudgetViewState extends State<BudgetView> {
   final BudgetController budgetController = Get.put(BudgetController());
   DateTime selectedDate = DateTime.now();
+
   @override
   Widget build(BuildContext context) {
-   
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: MainBarView(
-        title: 'Budgets',
+        title: 'Төсөв ',
         onNotfPressed: () {},
         onProfilePressed: () {},
       ),
@@ -55,26 +63,32 @@ class BudgetView extends StatelessWidget {
             }
 
             final privateBudgets = budgetController.budgets
-                .where((b) => b.ownerType == "User")
+                .where((b) => b.walletType == "private")
                 .toList();
             final familyBudgets = budgetController.budgets
-                .where((b) => b.ownerType == "Family")
+                .where((b) => b.walletType == "family")
                 .toList();
 
             final familyTotal = familyBudgets.fold<double>(0, (sum, b) => sum + b.amount);
-            final familyUsed = familyBudgets.fold<double>(0, (sum, b) => sum + b.usedAmount);
+            final familyUsed = familyBudgets.fold<double>(0, (sum, b) => sum + b.currentMonthBudget!.usedAmount);
             final privateTotal = privateBudgets.fold<double>(0, (sum, b) => sum + b.amount);
-            final privateUsed = privateBudgets.fold<double>(0, (sum, b) => sum + b.usedAmount);
+            final privateUsed = privateBudgets.fold<double>(0, (sum, b) => sum + b.currentMonthBudget!.usedAmount);
 
             return SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  MonthYearSelector(
-                    selectedDate: selectedDate,
-                    onChanged: (newDate) {},
-                  ),
-                  Padding(
+                 MonthYearSelector(
+  selectedDate: selectedDate,
+  onChanged: (newDate) {
+    setState(() {
+      selectedDate = newDate;
+    });
+    final yearMonth = "${newDate.year.toString().padLeft(4, '0')}-${newDate.month.toString().padLeft(2, '0')}";
+    budgetController.fetchBudgets(yearMonth: yearMonth);
+  },
+),
+                   Padding(
                     padding: const EdgeInsets.all(16),
                     child: BudgetSummaryCard(
                       familyTotal: familyTotal,
@@ -85,7 +99,7 @@ class BudgetView extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   BudgetSection(
-                    title: 'Private',
+                    title: 'Хувийн төсөв',
                     leadingIcon: Icons.person,
                     items: privateBudgets,
                     itemBuilder: (budget) => BudgetsRow(
@@ -96,7 +110,7 @@ class BudgetView extends StatelessWidget {
                     ),
                   ),
                   BudgetSection(
-                    title: 'Family',
+                    title: 'Гэр бүлийн төсөв',
                     leadingIcon: Icons.group,
                     items: familyBudgets,
                     itemBuilder: (budget) => BudgetsRow(
@@ -166,7 +180,8 @@ class MonthYearSelector extends StatelessWidget {
           // 🗓 Сар, жил харуулах
           Row(
             children: [
-              Icon(Icons.calendar_month, size: 22, color: const Color.fromARGB(255, 255, 255, 255)),
+              SizedBox(width: 40),
+              Icon(Icons.calendar_today, size: 22, color: const Color.fromARGB(255, 255, 255, 255)),
               Text(
                 formatted,
                 style: const TextStyle(
@@ -175,6 +190,13 @@ class MonthYearSelector extends StatelessWidget {
                   color: Colors.white,
                 ),
               ),
+              SizedBox(width: 10),
+                IconButton(
+      icon: Icon(Icons.download_rounded, color: Colors.white),
+      onPressed: () {
+        // downloadTransaction(txn);
+      },
+    ),
             ],
           ),
 
@@ -370,7 +392,7 @@ class AddCategoryDashedBox extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: const [
               Text(
-                'Add new budget',
+                'Шинэ төсөв нэмэх',
                 style: TextStyle(color: Colors.white70, fontSize: 16),
               ),
               SizedBox(width: 8),
@@ -429,7 +451,7 @@ class BudgetsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double leftAmount = budget.amount - budget.usedAmount;
+    double leftAmount = budget.amount - budget.currentMonthBudget!.usedAmount;
     double proVal = budget.amount == 0 ? 0 : leftAmount / budget.amount;
 
     return Padding(
@@ -474,12 +496,12 @@ class BudgetsRow extends StatelessWidget {
                               fontWeight: FontWeight.w600),
                         ),
                         Text(
-                          "\$${leftAmount.toStringAsFixed(2)} left to spend",
-                          style: TextStyle(
-                              color: TColor.gray10,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500),
-                        ),
+  formatCurrency(leftAmount), // <<<<<<<<<<<<<<<<<<
+  style: TextStyle(
+      color: TColor.gray10,
+      fontSize: 12,
+      fontWeight: FontWeight.w500),
+),
                       ],
                     ),
                   ),
@@ -487,20 +509,21 @@ class BudgetsRow extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                       Text(
-                        "\$${budget.amount.toStringAsFixed(2)}",
-                        style: TextStyle(
-                            color: TColor.gray10,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600),
-                      ),
-                      Text(
-                        "of \$${budget.usedAmount.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500),
-                      ),
+                     Text(
+  formatCurrency(budget.amount), // <<<<<<<<<<<<<<<<<<
+  style: TextStyle(
+      color: TColor.gray10,
+      fontSize: 14,
+      fontWeight: FontWeight.w600),
+),
+
+                     Text(
+  "of ${formatCurrency(budget.currentMonthBudget!.usedAmount)}", // <<<<<<<<<<<<<<<<<<
+  style: const TextStyle(
+      color: Colors.white,
+      fontSize: 12,
+      fontWeight: FontWeight.w500),
+),
                      
                     ],
                   ),
@@ -565,4 +588,15 @@ class BudgetSection extends StatelessWidget {
       children: items.map(itemBuilder).toList(),
     );
   }
+
+
+
 }
+
+String formatCurrency(double value, {bool symbolFirst = true}) {
+  final formatter = NumberFormat("#,##0", "mn");
+  return symbolFirst
+      ? "₮ ${formatter.format(value)}"
+      : "${formatter.format(value)} ₮";
+}
+

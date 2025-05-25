@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../models/transaction_model.dart';
 import '../services/api_service.dart';
@@ -23,14 +26,25 @@ class TransactionController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  
 Future<void> createTransaction(TransactionModel txn, String type) async {
   isLoading.value = true;
   try {
     final newTxn = await ApiService.postTransactionWithType(txn, type);
+    loadTransactions();
     if (newTxn != null) {
       transactions.add(newTxn);
+
+      // Амжилтын snackbar controller дээр шууд харуулна
+      Get.snackbar(
+        'Амжилттай', // Title
+        'Гүйлгээ амжилттай үүслээ',
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: const Color(0xFF4CAF50),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 2),
+      );
+      // **0.7 секунд хүлээгээд дараа нь хаана**
+      await Future.delayed(const Duration(milliseconds: 700));
       Get.back(); // form хаагдана
     }
   } catch (e) {

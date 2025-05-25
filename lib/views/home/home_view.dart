@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:budgetfrontend/widgets/line_chart.dart';
 import 'package:budgetfrontend/views/home/main_bar_view.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -93,11 +94,11 @@ void initState() {
     ),
     items: [
       _buildBalanceCard(
-        title: 'Private Balance',
+        title: 'Хувийн данс',
         balance: myWallet?.balance ?? 0,
       ),
       _buildBalanceCard(
-        title: 'Family Balance',
+        title: 'Гэр бүлийн данс',
         balance: familyWallet?.balance ?? 0,
       ),
     ],
@@ -123,7 +124,15 @@ void initState() {
     );
   }
 
- Widget _buildBalanceCard({required String title, required double balance}) {
+Widget _buildBalanceCard({required String title, required double balance}) {
+  final NumberFormat currencyFormat = NumberFormat.currency(
+    locale: 'mn_MN',
+    symbol: '₮',
+    decimalDigits: 0,
+    customPattern: "#,##0 ¤",
+  );
+  String formattedBalance = currencyFormat.format(balance);
+
   return Container(
     margin: const EdgeInsets.symmetric(horizontal: 2.0),
     width: MediaQuery.of(context).size.width,
@@ -154,7 +163,7 @@ void initState() {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          '₮${balance.toStringAsFixed(0)}',
+                          formattedBalance,
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 28,
@@ -165,19 +174,19 @@ void initState() {
                     ),
                   ),
                   GestureDetector(
-  onTap: () {
-  final bool isFamilyWallet = title == 'Family Balance'; // ← энд зөв
-  _showEditBalanceDialog(
-    title: title,
-    isFamilyWallet: isFamilyWallet,
-  );
-},
-  child: const Icon(
-    Icons.tune_rounded,
-    color: Colors.white,
-    size: 28,
-  ),
-),
+                    onTap: () {
+                      final bool isFamilyWallet = title == 'Гэр бүлийн данс';
+                      _showEditBalanceDialog(
+                        title: title,
+                        isFamilyWallet: isFamilyWallet,
+                      );
+                    },
+                    child: const Icon(
+                      Icons.tune_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 30),
@@ -194,13 +203,11 @@ void initState() {
             ],
           ),
         ),
-
-        // 🏁 БАРУУН ДООД буланд NFC icon-г буцааж нэмнэ!
         Positioned(
           bottom: 12,
           right: 12,
           child: Image.asset(
-            'assets/icon/cardd2.png', // ← энд чиний жижиг цагаан icon байрлаж байна
+            'assets/icon/cardd2.png',
             width: 70,
             height: 60,
             fit: BoxFit.contain,
@@ -210,6 +217,7 @@ void initState() {
     ),
   );
 }
+
 
   Widget _buildCreateFamilyPrompt() {
     return Center(
@@ -252,9 +260,9 @@ void initState() {
       Obx(() {
         final familyName = familyController.family.value?.familyName ?? 'Family';
         return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Text(
-            familyName,
+            "${familyName} гишүүд" ,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 15,
@@ -276,7 +284,7 @@ void initState() {
           if (members.isEmpty) {
             return const Center(
               child: Text(
-                'No family members',
+                'Гэр бүлийн гишүүн байхгүй байна ',
                 style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
             );
@@ -346,16 +354,16 @@ Widget _buildAddMemberButton() {
 
 Widget _buildFamilyMember(String name, String avatarUrl) {
   return Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 8),
+    padding: const EdgeInsets.symmetric(horizontal: 5),
     child: Column(
       children: [
         Container(
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.blueAccent, width: 2), // ✅ Border нэмсэн
+            border: Border.all(color: const Color.fromARGB(255, 220, 219, 219), width: 2), // ✅ Border нэмсэн
             boxShadow: [
               BoxShadow(
-                color: const Color.fromARGB(255, 68, 127, 255).withOpacity(0.4),
+                color: const Color.fromARGB(255, 255, 255, 255).withOpacity(0.4),
                 blurRadius: 6,
                 offset: const Offset(3, 3),
               ),
@@ -371,7 +379,7 @@ Widget _buildFamilyMember(String name, String avatarUrl) {
         ),
         const SizedBox(height: 6),
         SizedBox(
-          width: 70, // ✅ Нэрний уртыг хязгаарлах
+          width: 50, // ✅ Нэрний уртыг хязгаарлах
           child: Text(
             name,
             textAlign: TextAlign.center,
@@ -395,7 +403,7 @@ Widget _buildFamilyMember(String name, String avatarUrl) {
         Row(
           children: [
             const Text(
-              "     Analytics",
+              "     Тайлан",
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -406,7 +414,7 @@ Widget _buildFamilyMember(String name, String avatarUrl) {
             TextButton(
               onPressed: () {},
               child: const Text(
-                "View All ➔",
+                "харах ➔",
                 style: TextStyle(
                   color: Color.fromARGB(255, 23, 130, 218),
                   fontSize: 12,
@@ -424,12 +432,33 @@ Widget _buildFamilyMember(String name, String avatarUrl) {
     );
   }
 
- Future<void> _showEditBalanceDialog({required String title, required bool isFamilyWallet}) async {
+ Future<void> _showEditBalanceDialog({
+  required String title,
+  required bool isFamilyWallet,
+}) async {
+  final NumberFormat formatter = NumberFormat("#,##0", "en_US");
   final TextEditingController balanceController = TextEditingController();
+
   final wallet = isFamilyWallet ? walletController.familyWallet.value : walletController.myWallet.value;
   if (wallet != null) {
-    balanceController.text = wallet.balance.toStringAsFixed(0);
+    balanceController.text = formatter.format(wallet.balance);
   }
+
+  // Real-time формат
+  balanceController.addListener(() {
+    String text = balanceController.text.replaceAll(',', '').replaceAll('₮', '');
+    if (text.isEmpty) return;
+    double? value = double.tryParse(text);
+    if (value != null) {
+      String newText = formatter.format(value);
+      if (balanceController.text != newText) {
+        balanceController.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: newText.length),
+        );
+      }
+    }
+  });
 
   await showModalBottomSheet(
     context: context,
@@ -438,19 +467,20 @@ Widget _buildFamilyMember(String name, String avatarUrl) {
     builder: (context) {
       return DraggableScrollableSheet(
         expand: false,
-        initialChildSize: 0.4,
-        maxChildSize: 0.6,
-        minChildSize: 0.3,
+        initialChildSize: 0.43,
+        maxChildSize: 0.65,
+        minChildSize: 0.35,
         builder: (context, scrollController) {
           return Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(22),
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
+                  color: Colors.black.withOpacity(0.09),
+                  blurRadius: 24,
+                  spreadRadius: 3,
                 ),
               ],
             ),
@@ -461,53 +491,127 @@ Widget _buildFamilyMember(String name, String avatarUrl) {
                 children: [
                   Container(
                     width: 40,
-                    height: 4,
-                    margin: const EdgeInsets.only(bottom: 20),
+                    height: 5,
+                    margin: const EdgeInsets.only(bottom: 18),
                     decoration: BoxDecoration(
-                      color: const Color.fromARGB(255, 209, 215, 221),
+                      color: Colors.grey.shade300,
                       borderRadius: BorderRadius.circular(10),
                     ),
                   ),
-                  Text(
-                    "$title шинэчлэх",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 20),
-                  TextField(
-                    controller: balanceController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      hintText: "Шинэ баланс оруулна уу",
-                      filled: true,
-                      fillColor: Colors.grey.shade200,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: BorderSide.none,
+                  // Title + icon
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 24,
+                        backgroundColor: Colors.blue.shade100,
+                        child: Icon(
+                          isFamilyWallet ? Icons.groups : Icons.person,
+                          color: Colors.blueAccent,
+                          size: 30,
+                        ),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                    ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "$title шинэчлэх",
+                            style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xff333546)),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "Шинэ мөнгөн дүнгээ оруулна уу",
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade500),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
+                  // Input
+                  Container(
+  decoration: BoxDecoration(
+    borderRadius: BorderRadius.circular(14),
+    color: Colors.grey.shade100,
+    boxShadow: [
+      BoxShadow(
+        color: Colors.blue.shade50,
+        blurRadius: 4,
+        offset: const Offset(0, 2),
+      )
+    ],
+  ),
+  child: TextField(
+    controller: balanceController,
+    keyboardType: TextInputType.number, 
+    // cursorColor: Colors.blue,
+    style: const TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1.1,
+    ),
+    decoration: InputDecoration(
+      prefixIcon: Padding(
+        padding: const EdgeInsets.only(left: 18, right: 6),
+        child: Text(
+          "₮",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 26,
+            color: Color(0xff0076e8),
+          ),
+        ),
+      ),
+      prefixIconConstraints: const BoxConstraints(
+        minWidth: 0,
+        minHeight: 0,
+      ),
+      hintText: "0",
+      hintStyle: TextStyle(
+        fontWeight: FontWeight.w400,
+        fontSize: 18,
+        color: Colors.grey.shade400,
+      ),
+      border: InputBorder.none,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 16),
+    ),
+  ),
+)
+,
+                  const SizedBox(height: 28),
                   Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () => Navigator.pop(context),
                           style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.blue),
+                            side: const BorderSide(color: Color(0xff0076e8)),
+                            foregroundColor: const Color(0xff0076e8),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            textStyle: const TextStyle(fontWeight: FontWeight.bold),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                           ),
-                          child: const Text("Болих", style: TextStyle(color: Colors.blue)),
+                          child: const Text("Болих"),
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                            backgroundColor: const Color(0xff0076e8),
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            textStyle: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           onPressed: () async {
-                            final newBalance = double.tryParse(balanceController.text);
+                            String text = balanceController.text.replaceAll(',', '');
+                            final newBalance = double.tryParse(text);
                             if (newBalance != null) {
                               if (isFamilyWallet) {
                                 await walletController.updateFamilyWalletBalance(newBalance);
@@ -522,6 +626,7 @@ Widget _buildFamilyMember(String name, String avatarUrl) {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 6),
                 ],
               ),
             ),
@@ -531,5 +636,7 @@ Widget _buildFamilyMember(String name, String avatarUrl) {
     },
   );
 }
+
+
 
 }

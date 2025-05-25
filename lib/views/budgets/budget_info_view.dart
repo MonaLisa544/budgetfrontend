@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:budgetfrontend/models/budget_model.dart';
-import 'package:budgetfrontend/views/budgets/add_budget_view.dart'; // ✅ Засах үед хэрэгтэй
+import 'package:budgetfrontend/views/budgets/add_budget_view.dart';
 import 'package:get/get.dart';
 import 'package:budgetfrontend/controllers/budget_controller.dart';
 
@@ -18,6 +18,20 @@ Future<void> showBudgetDetailDialog(BuildContext context, BudgetModel budget) {
 class BudgetDetailContent extends StatelessWidget {
   final BudgetModel budget;
   const BudgetDetailContent({super.key, required this.budget});
+
+  // Month -> Start date: YYYY-MM-01
+  String getStartDateFromMonth(String? month) {
+    if (month == null || month.length != 7) return "-";
+    return "$month-01";
+  }
+
+  // Month -> End date: last day of month
+  String getEndDateFromMonth(String? month) {
+    if (month == null || month.length != 7) return "-";
+    final date = DateTime.parse("$month-01");
+    final lastDay = DateTime(date.year, date.month + 1, 0).day;
+    return "$month-${lastDay.toString().padLeft(2, '0')}";
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,17 +72,20 @@ class BudgetDetailContent extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 25),
-
                   _buildDetailRow("Нэр:", budget.budgetName),
-                  _buildDetailRow("Төлөв:", budget.statusLabel),
                   _buildDetailRow("Нийт төсөв:", "${budget.amount.toStringAsFixed(2)}₮"),
-                  _buildDetailRow("Ашигласан:", "${budget.usedAmount.toStringAsFixed(2)}₮"),
-                  _buildDetailRow("Эхлэх огноо:", budget.startDate),
-                  _buildDetailRow("Дуусах огноо:", budget.dueDate),
-                  _buildDetailRow("Төлбөрийн огноо:", budget.payDueDate),
+                  _buildDetailRow("Ашигласан:", "${budget.currentMonthBudget?.usedAmount.toStringAsFixed(2) ?? '-'}₮"),
+                  _buildDetailRow(
+                    "Эхлэх огноо:",
+                    getStartDateFromMonth(budget.currentMonthBudget?.month),
+                  ),
+                  _buildDetailRow(
+                    "Дуусах огноо:",
+                    getEndDateFromMonth(budget.currentMonthBudget?.month),
+                  ),
+                  _buildDetailRow("Төлбөрийн огноо:", budget.payDueDate.toString()),
                   _buildDetailRow("Тайлбар:", budget.description.isNotEmpty ? budget.description : "—"),
-                  _buildDetailRow("Хэтэвч:", budget.ownerType == 'Family' ? "Family Wallet" : "Private Wallet"),
-
+                  _buildDetailRow("Хэтэвч:", budget.walletType == 'family' ? "Family Wallet" : "Private Wallet"),
                   const SizedBox(height: 15),
 
                   Padding(
@@ -141,7 +158,6 @@ class BudgetDetailContent extends StatelessWidget {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 10),
                 ],
               ),
@@ -225,5 +241,3 @@ class BudgetDetailContent extends StatelessWidget {
     );
   }
 }
-
-

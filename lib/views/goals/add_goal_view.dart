@@ -6,14 +6,10 @@ import 'package:budgetfrontend/controllers/goal_controller.dart';
 import 'package:budgetfrontend/models/goal_model.dart';
 import 'package:budgetfrontend/widgets/blue_field_text_theme.dart';
 import 'package:top_snackbar_flutter/custom_snack_bar.dart';
-import 'package:top_snackbar_flutter/top_snack_bar.dart';
 import 'package:flutter/cupertino.dart';
-
-
 
 class AddGoalView extends StatefulWidget {
   final GoalModel? editGoal;
-
   const AddGoalView({Key? key, this.editGoal}) : super(key: key);
 
   @override
@@ -25,49 +21,88 @@ class _AddGoalViewState extends State<AddGoalView> {
   final goalController = Get.put(GoalController());
 
   final nameController = TextEditingController();
-  final amountController = TextEditingController();
+  final targetAmountController = TextEditingController();
   final descriptionController = TextEditingController();
-  final List<String> accounts = ['Family Wallet', 'Private Wallet'];
-  DateTime? selectedDate;
-  final TextEditingController noteController = TextEditingController();
+  final startingAmountController = TextEditingController();
+  final monthlyPaidAmountController = TextEditingController();
 
-  String selectedAccount = 'Private Wallet';
-  String selectedGoalType = 'saving';
+  final List<String> accounts = ['Гэр бүлийн данс', 'Хувийн данс'];
+  // Mongol label + English value хослуул
+final List<Map<String, String>> goalTypes = [
+  {'label': 'Хадгаламж', 'value': 'saving'},
+  {'label': 'Зээл', 'value': 'loan'},
+];
+String selectedGoalType = 'saving'; // default утга
+  String selectedAccount = 'Хувийн данс';
+  // String selectedGoalType = 'Хадгаламж';
+  int selectedDueDay = DateTime.now().day;
+  bool showField = false;
+  String? selectedDateError;
   DateTime startDate = DateTime.now();
-  DateTime expectedDate = DateTime.now().add(const Duration(days: 365));
-  final List<String> goalTypes = ['saving', 'loan']; // 🎯 Goal Type жагсаалт
-  bool isAutoCalculate = true;
-  final TextEditingController monthsLeftController = TextEditingController();
-  final TextEditingController monthlyPaymentController =
-      TextEditingController();
+  DateTime? selectedDate;
 
- late int selectedDueDay; // 🎯 Сонгогдсон сарын өдөр
- String? selectedDateError; // 🎯 Expected Date-д зориулсан error хадгалах хувьсагч
+ @override
+void initState() {
+  super.initState();
 
+  // 🔥 Format all currency fields
+  void setupCurrencyFormatter(TextEditingController controller) {
+    controller.addListener(() {
+      String text = controller.text.replaceAll(RegExp(r'[^\d]'), '');
+      if (text.isEmpty) {
+        controller.value = TextEditingValue(
+          text: '',
+          selection: const TextSelection.collapsed(offset: 0),
+        );
+      } else {
+        final formatter = NumberFormat("#,##0", "mn");
+        String newText = formatter.format(int.parse(text));
+        controller.value = TextEditingValue(
+          text: newText,
+          selection: TextSelection.collapsed(offset: newText.length),
+        );
+      }
+    });
+  }
+
+  setupCurrencyFormatter(targetAmountController);
+  setupCurrencyFormatter(startingAmountController);
+  setupCurrencyFormatter(monthlyPaidAmountController);
+
+  if (widget.editGoal != null) {
+    final goal = widget.editGoal!;
+    nameController.text = goal.goalName;
+    targetAmountController.text = NumberFormat("#,##0", "mn").format(goal.targetAmount);
+    descriptionController.text = goal.description ?? '';
+    selectedGoalType = goal.goalType;
+    selectedAccount = goal.walletType == 'family' ? 'Гэр бүлийн данс' : 'Хувийн данс';
+    selectedDueDay = goal.monthlyDueDay;
+    startDate = DateTime.tryParse(goal.startDate.toString()) ?? DateTime.now();
+    selectedDate = DateTime.tryParse(goal.expectedDate.toString());
+    startingAmountController.text = goal.savedAmount != null
+        ? NumberFormat("#,##0", "mn").format(goal.savedAmount)
+        : '';
+    monthlyPaidAmountController.text = goal.monthlyDueAmount != null
+        ? NumberFormat("#,##0", "mn").format(goal.monthlyDueAmount)
+        : '';
+  }
+}
 
   @override
-  void initState() {
-    super.initState();
-    selectedDueDay = DateTime.now().day;
-    if (widget.editGoal != null) {
-      final goal = widget.editGoal!;
-      nameController.text = goal.goalName;
-      amountController.text = goal.targetAmount.toString();
-      descriptionController.text = goal.description;
-      startDate = goal.startDate;
-      expectedDate = goal.expectedDate;
-      selectedAccount =
-          goal.ownerType == 'Family' ? 'Family Wallet' : 'Private Wallet';
-      selectedGoalType = goal.goalType;
-    }
-     
+  void dispose() {
+    nameController.dispose();
+    targetAmountController.dispose();
+    descriptionController.dispose();
+    startingAmountController.dispose();
+    monthlyPaidAmountController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: BackAppBar(
-        title: widget.editGoal != null ? 'Edit Goal' : 'Add Goal',
+        title: widget.editGoal != null ? 'Зорилго засах' : 'Зорилго нэмэх',
       ),
       backgroundColor: Colors.white,
       body: BlueTextFieldTheme(
@@ -78,13 +113,12 @@ class _AddGoalViewState extends State<AddGoalView> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // const SizedBox(height: 10),
-                TextFormField(
+                 TextFormField(
                   controller: nameController,
                   keyboardType: TextInputType.text,
                   autofocus: true, // Name учраас number биш текст болгоно
                   decoration: InputDecoration(
-                    labelText: 'Goal Name',
+                    labelText: 'Зорилгын нэр',
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 10,
                       horizontal: 20,
@@ -109,18 +143,18 @@ class _AddGoalViewState extends State<AddGoalView> {
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter name';
+                      return 'Зорилгын нэр оруулна уу!';
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
-
-                TextFormField(
-                  controller: amountController,
+                  TextFormField(
+                  controller: targetAmountController,
                   keyboardType: TextInputType.number,
                   decoration: InputDecoration(
-                    labelText: 'Amount',
+                    labelText: 'Үнийн дүн',
+                    prefix: const Text('₮ ', style: TextStyle(fontWeight: FontWeight.bold)),
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 12,
                       horizontal: 20,
@@ -158,15 +192,15 @@ class _AddGoalViewState extends State<AddGoalView> {
                     ),
                   ),
                   validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Please enter amount';
-                    }
-                    if (double.tryParse(value) == null ||
-                        double.parse(value) <= 0) {
-                      return 'Enter a valid amount';
-                    }
-                    return null;
-                  },
+    if (value == null || value.trim().isEmpty) {
+      return 'Үнийн дүн оруулна уу!';
+    }
+    final onlyDigits = value.replaceAll(RegExp(r'[^\d]'), '');
+    if (onlyDigits.isEmpty || double.tryParse(onlyDigits) == null || double.parse(onlyDigits) <= 0) {
+      return 'Боломжгүй үнийн дүн байна';
+    }
+    return null;
+  },
                 ),
                 const SizedBox(height: 20),
                 DropdownButtonFormField<String>(
@@ -177,7 +211,7 @@ class _AddGoalViewState extends State<AddGoalView> {
                   dropdownColor: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   decoration: InputDecoration(
-                    labelText: 'Account',
+                    labelText: 'Данс',
                     floatingLabelStyle: const TextStyle(
                       color: Colors.black38,
                       fontWeight: FontWeight.bold,
@@ -249,140 +283,111 @@ class _AddGoalViewState extends State<AddGoalView> {
                   },
                 ),
                 const SizedBox(height: 16),
-
-                const Text(
-                  'Goal Type',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-
-                // const SizedBox(height: 5),
-                Row(
-                  children:
-                      goalTypes.map((type) {
-                        return Expanded(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              Radio<String>(
-                                value: type,
-                                groupValue: selectedGoalType,
-                                onChanged: (value) {
-                                  setState(() {
-                                    selectedGoalType = value!;
-                                  });
-                                },
-                                activeColor: Colors.blue,
-                              ),
-                              Text(
-                                type.capitalizeFirst ?? type,
-                                style: const TextStyle(fontSize: 15),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                ),
-
-                // const SizedBox(height: 16),
-            FloatingLabelContainer(
-  label: 'Expected Date',
-  child: InkWell(
-    onTap: () => pickExpectedDate(context),
-    borderRadius: BorderRadius.circular(20),
-    child: InputDecorator(
-      decoration: InputDecoration(
-        errorText: selectedDateError, // 🎯 selectedDateError-г харуулна
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: Colors.grey),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: Colors.grey),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
-          borderSide: const BorderSide(color: Colors.blue, width: 1.5),
-        ),
-      ),
+                const Text('Зорилгын төрөл', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+              Row(
+  children: goalTypes.map((type) {
+    return Expanded(
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            selectedDate != null
-                ? DateFormat('dd MMM yyyy').format(selectedDate!)
-                : '---',
-            style: const TextStyle(fontSize: 16),
+          Radio<String>(
+            value: type['value']!,
+            groupValue: selectedGoalType,
+            onChanged: (value) {
+              setState(() {
+                selectedGoalType = value!;
+              });
+            },
+            activeColor: Colors.blue,
           ),
-          const Icon(Icons.calendar_today, size: 18),
+          Text(type['label']!),
         ],
       ),
-    ),
-  ),
+    );
+  }).toList(),
 ),
-
-                SizedBox(height: 16),
-                Text("Reminder", style: TextStyle(fontWeight: FontWeight.w500)),
-                SizedBox(height: 5),
-            Container(
-  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-  decoration: BoxDecoration(
-    border: Border.all(
-      color: const Color.fromARGB(255, 185, 185, 185), // 🎯 Хүрээний өнгө
-      width: 1.5,         // 🎯 Хүрээний зузаан
-    ),
-    borderRadius: BorderRadius.circular(20), // 🎯 Буланг дугуйруулна
-    color: Colors.white, // 🎯 Дотор фонт цагаан
-  ),
-  child: buildMonthlyDueDateSelector(),
-),
-
-              
-                
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: noteController,
-                  minLines: 3,
-                  maxLines: 5,
-                  keyboardType: TextInputType.multiline,
-                  decoration: InputDecoration(
-                    labelText: 'Notes', // 🎯 LabelText ашиглана
-                    floatingLabelBehavior:
-                        FloatingLabelBehavior.auto, // 🎯 Auto дээш хөөрдөг
-                    labelStyle: TextStyle(color: Colors.grey.shade400),
-                    floatingLabelStyle: TextStyle(
-                      color: const Color.fromARGB(255, 138, 137, 137),
-                      fontWeight: FontWeight.bold,
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 16,
-                    ),
-                    fillColor: const Color.fromARGB(
-                      255,
-                      255,
-                      255,
-                      255,
-                    ), // 🎯 Арын фонт
-                    filled: true,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(color: Colors.grey.shade300),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(
-                        color: const Color.fromARGB(255, 179, 178, 178),
+                FloatingLabelContainer(
+                  label: 'Дуусах хугацаа',
+                  child: InkWell(
+                    onTap: () => pickExpectedDate(context),
+                    borderRadius: BorderRadius.circular(20),
+                    child: InputDecorator(
+                      decoration: InputDecoration(
+                        errorText: selectedDateError,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: const BorderSide(color: Colors.grey),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: const BorderSide(color: Colors.grey),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(20),
+                          borderSide: const BorderSide(color: Colors.blue, width: 1.5),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            selectedDate != null
+                                ? DateFormat('dd MMM yyyy').format(selectedDate!)
+                                : '---',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const Icon(Icons.calendar_today, size: 18),
+                        ],
                       ),
                     ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(20),
-                      borderSide: BorderSide(color: Colors.blue, width: 1.5),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() {
+                        showField = !showField;
+                      });
+                    },
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(showField ? "Нуух" : "Цааш", style: const TextStyle(color: Colors.blue)),
+                        const SizedBox(width: 4),
+                        Icon(showField ? Icons.arrow_drop_up : Icons.arrow_drop_down, color: Colors.blue),
+                      ],
                     ),
                   ),
-                  style: const TextStyle(fontSize: 16),
                 ),
+                if (showField) ...[
+                  const Text("Сануулга", style: TextStyle(fontWeight: FontWeight.w500)),
+                  const SizedBox(height: 5),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color.fromARGB(255, 185, 185, 185), width: 1.5),
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white,
+                    ),
+                    child: buildMonthlyDueDateSelector(),
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: startingAmountController,
+                    keyboardType: TextInputType.number,
+                    decoration: _inputDecoration('Эхлэх үнийн дүн', prefix: '₮ ',  suffix: Icons.currency_exchange),
+                    // validator байхгүй!
+                  ),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: monthlyPaidAmountController,
+                    keyboardType: TextInputType.number,
+                    decoration: _inputDecoration('Сарын төлбөр', prefix: '₮ ',suffix: Icons.currency_exchange),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                
                 const SizedBox(height: 24),
                 ElevatedButton(
                   onPressed: saveGoal,
@@ -390,26 +395,19 @@ class _AddGoalViewState extends State<AddGoalView> {
                     minimumSize: const Size.fromHeight(48),
                     backgroundColor: Colors.blue,
                   ),
-                  child: Text(widget.editGoal != null ? 'Update' : 'Create'),
+                  child: Text(widget.editGoal != null ? 'Засах' : 'Үүсгэх'),
                 ),
-
                 const SizedBox(height: 10),
                 OutlinedButton(
                   onPressed: () => Navigator.pop(context),
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(
-                      color: Colors.blue,
-                      width: 1.5,
-                    ), // Хүрээний өнгө
-                    minimumSize: const Size.fromHeight(48), // Өндөр
+                    side: const BorderSide(color: Colors.blue, width: 1.5),
+                    minimumSize: const Size.fromHeight(48),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(7),
                     ),
                   ),
-                  child: const Text(
-                    'Cancel',
-                    style: TextStyle(color: Colors.blue),
-                  ),
+                  child: const Text('Цуцлах', style: TextStyle(color: Colors.blue)),
                 ),
                 const SizedBox(height: 50),
               ],
@@ -419,157 +417,182 @@ class _AddGoalViewState extends State<AddGoalView> {
       ),
     );
   }
- void pickExpectedDate(BuildContext context) {
-  DateTime tempPickedDate = selectedDate ?? DateTime.now();  // 🎯 selectedDate-ийг түр хадгална
 
-  showCupertinoModalPopup(
-    context: context,
-    useRootNavigator: true,
-    builder: (popupContext) => Container(
-      height: 300,
-      color: Colors.white,
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          Expanded(
-            child: CupertinoDatePicker(
-              mode: CupertinoDatePickerMode.date,
-              initialDateTime: selectedDate, // 🎯 selectedDate эхлэх
-              minimumDate: DateTime(2020, 1, 1),
-              maximumDate: DateTime(2035, 12, 31),
-              onDateTimeChanged: (DateTime newDate) {
-                tempPickedDate = newDate; // 🎯 Түр хадгална
-              },
-            ),
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              CupertinoButton(
-                child: const Text('OK', style: TextStyle(color: Colors.blue)),
-                onPressed: () {
-                  setState(() {
-                    selectedDate = tempPickedDate; // 🎯 OK дархад selectedDate-г онооно
-                  });
-                  Navigator.of(popupContext).pop();
+  InputDecoration _inputDecoration(String label, {String? prefix, IconData? suffix}) {
+  return InputDecoration(
+    labelText: label,
+    prefix: prefix != null
+        ? Text(prefix, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))
+        : null,
+    // бусад кодууд чинь хэвээрээ
+    suffixIcon: suffix != null
+        ? Padding(
+            padding: const EdgeInsets.only(right: 12),
+            child: Icon(suffix, size: 24, color: Colors.blueGrey),
+          )
+        : null,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(20),
+      borderSide: const BorderSide(color: Colors.grey),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(20),
+      borderSide: const BorderSide(color: Colors.blue, width: 1.5),
+    ),
+    labelStyle: const TextStyle(color: Colors.grey),
+    floatingLabelStyle: const TextStyle(
+      color: Colors.grey,
+      fontWeight: FontWeight.bold,
+    ),
+    contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+  );
+}
+
+  void pickExpectedDate(BuildContext context) {
+    DateTime tempPickedDate = selectedDate ?? DateTime.now();
+    showCupertinoModalPopup(
+      context: context,
+      useRootNavigator: true,
+      builder: (popupContext) => Container(
+        height: 300,
+        color: Colors.white,
+        child: Column(
+          children: [
+            const SizedBox(height: 20),
+            Expanded(
+              child: CupertinoDatePicker(
+                mode: CupertinoDatePickerMode.date,
+                initialDateTime: selectedDate ?? DateTime.now(),
+                minimumDate: DateTime(2020, 1, 1),
+                maximumDate: DateTime(2035, 12, 31),
+                onDateTimeChanged: (DateTime newDate) {
+                  tempPickedDate = newDate;
                 },
               ),
-            ],
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-Widget buildMonthlyDueDateSelector() {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      const Text(
-        'Monthly Due Date',
-        style: TextStyle(
-          fontSize: 14,
-          // fontWeight: FontWeight.w600,
-          color: Color.fromARGB(221, 39, 39, 39),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                CupertinoButton(
+                  child: const Text('OK', style: TextStyle(color: Colors.blue)),
+                  onPressed: () {
+                    setState(() {
+                      selectedDate = tempPickedDate;
+                    });
+                    Navigator.of(popupContext).pop();
+                  },
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-      SizedBox(width: 30),
-      Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.orange, size: 24),
-            onPressed: () {
-              setState(() {
-                if (selectedDueDay <= 1) {
-                  selectedDueDay = 1;
-                } else {
-                  selectedDueDay = selectedDueDay - 1;
-                }
-              });
-            },
-          ),
-          // const SizedBox(width: 2),
-          Text(
-           selectedDueDay.toString(),
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-              color: Color.fromARGB(255, 102, 102, 102),
-            ),
-          ),
-          // const SizedBox(width: 2),
-          IconButton(
-            icon: const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.green, size: 24),
-            onPressed: () {
-              setState(() {
-                if (selectedDueDay == null || selectedDueDay! >= 31) {
-                  selectedDueDay = 31;
-                } else {
-                  selectedDueDay = selectedDueDay! + 1;
-                }
-              });
-            },
-          ),
-        ],
-      ),
-    ],
-  );
-}
-
-void saveGoal() async {
-  bool isValid = _formKey.currentState!.validate();
-
-  // 🎯 Энд selectedDate шалгах
-  if (selectedDate == null) {
-    setState(() {
-      selectedDateError = 'Please select expected date';
-    });
-    return;
-  } else {
-    setState(() {
-      selectedDateError = null; // ✅ Зөв сонгогдсон бол алдааг арилгана
-    });
-  }
-
-  if (!isValid) {
-    showTopSnackBar(
-      Get.overlayContext! as OverlayState,
-      CustomSnackBar.error(message: 'Please fill all required fields'),
     );
-    return;
   }
 
-  final goal = GoalModel(
-    id: 0,
-    goalName: nameController.text.trim(),
-    goalType: selectedGoalType,
-    status: 'active',
-    targetAmount: double.parse(amountController.text.trim()),
-    paidAmount: 0,
-    remainingAmount: double.parse(amountController.text.trim()),
-    startDate: startDate,
-    expectedDate: selectedDate!,
-    monthlyDueDay: selectedDueDay,
-    description: descriptionController.text.trim(),
-    progressPercentage: 0,
-    monthsLeft: 0,
-    ownerType: selectedAccount == 'Family Wallet' ? 'family' : 'private',
-    walletId: 0,
+  Widget buildMonthlyDueDateSelector() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+          'Сарын төлбөрийн хугацаа',
+          style: TextStyle(fontSize: 12, color: Color.fromARGB(221, 39, 39, 39)),
+        ),
+        SizedBox(width: 0),
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.orange, size: 24),
+              onPressed: () {
+                setState(() {
+                  if (selectedDueDay <= 1) {
+                    selectedDueDay = 1;
+                  } else {
+                    selectedDueDay -= 1;
+                  }
+                });
+              },
+            ),
+            Text(
+              selectedDueDay.toString(),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Color.fromARGB(255, 102, 102, 102)),
+            ),
+            IconButton(
+              icon: const Icon(Icons.keyboard_arrow_up_rounded, color: Colors.green, size: 24),
+              onPressed: () {
+                setState(() {
+                  if (selectedDueDay >= 31) {
+                    selectedDueDay = 31;
+                  } else {
+                    selectedDueDay += 1;
+                  }
+                });
+              },
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  void saveGoal() async {
+    bool isValid = _formKey.currentState!.validate();
+    if (selectedDate == null) {
+      setState(() {
+        selectedDateError = 'Please select expected date';
+      });
+      return;
+    } else {
+      setState(() {
+        selectedDateError = null;
+      });
+    }
+    if (!isValid) {
+      // showTopSnackBar(
+      //   Get.overlayContext! as OverlayState,
+      //   CustomSnackBar.error(message: 'Please fill all required fields'),
+      // );
+      return;
+    }
+    final double? targetAmount = double.tryParse(
+    targetAmountController.text.trim().replaceAll(RegExp(r'[^\d]'), ''),
   );
+  final double? startingAmount = startingAmountController.text.trim().isNotEmpty
+      ? double.tryParse(startingAmountController.text.trim().replaceAll(RegExp(r'[^\d]'), ''))
+      : 0;
+  final double? monthlyPaidAmount = monthlyPaidAmountController.text.trim().isNotEmpty
+      ? double.tryParse(monthlyPaidAmountController.text.trim().replaceAll(RegExp(r'[^\d]'), ''))
+      : 0;
 
-  if (widget.editGoal != null) {
-    await goalController.updateGoal(goal);
-  } else {
-    await goalController.createGoal(goal);
+    final goal = GoalModel(
+      id: widget.editGoal?.id ?? 0,
+      goalName: nameController.text.trim(),
+      goalType: selectedGoalType,
+      status: 'active',
+      targetAmount: targetAmount ?? 0,
+      savedAmount: startingAmount ?? 0,
+      startDate: DateFormat('yyyy-MM-dd').format(startDate),
+      expectedDate: DateFormat('yyyy-MM-dd').format(selectedDate!),
+      monthlyDueDay: selectedDueDay,
+      monthlyDueAmount: monthlyPaidAmount ?? 0,
+      description: descriptionController.text.trim(),
+      remainingAmount: (targetAmount ?? 0) - (startingAmount ?? 0),
+      monthsLeft: 0,
+      walletType: selectedAccount == 'Family Wallet' ? 'family' : 'private',
+    );
+
+    if (widget.editGoal != null) {
+      await goalController.updateGoal(goal);
+    } else {
+      await goalController.createGoal(goal);
+    }
+    Navigator.pop(context);
   }
-
-  Navigator.pop(context);
 }
 
-}
-
+/// Label-тай field-ийг бага зэрэг хөөрхөн харагдуулах wrapper
 class FloatingLabelContainer extends StatelessWidget {
   final String label;
   final Widget child;
@@ -593,15 +616,14 @@ class FloatingLabelContainer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               label,
-              style: const TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey,
-              ),
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey),
             ),
           ),
         ),
       ],
     );
   }
+
 }
+
+  

@@ -34,7 +34,7 @@ class _CategoryManagePageState extends State<CategoryManagePage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BackAppBar(title: 'Categories'),
+      appBar: BackAppBar(title: 'Ангилал'),
       body: Column(
         children: [
           Padding(
@@ -55,8 +55,8 @@ class _CategoryManagePageState extends State<CategoryManagePage>
                 labelColor: Colors.white,
                 unselectedLabelColor: Colors.black,
                 tabs: const [
-                  Tab(text: 'EXPENSES'),
-                  Tab(text: 'INCOME'),
+                  Tab(text: 'ЗАРЛАГА'),
+                  Tab(text: 'ОРЛОГО'),
                 ],
               ),
             ),

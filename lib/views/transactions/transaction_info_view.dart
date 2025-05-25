@@ -149,34 +149,10 @@ class TransactionDetailContent extends StatelessWidget {
                 ],
               ),
             ),
-    //       Positioned(
-    //   top: 10,
-    //   right: 30,
-    //   child: TextButton(
-    //      onPressed: () {
-    //                       Navigator.pop(context);
-    //                       Navigator.push(
-    //                         context,
-    //                         MaterialPageRoute(
-    //                           builder: (_) => AddTransactionView(
-    //                             type: transaction.transactionType ?? 'expense',
-    //                             editTransaction: transaction,
-    //                           ),
-    //                         ),
-    //                       );
-    //                     },
-    //     child: const Text(
-    //       "Гарах",
-    //       style: TextStyle(
-    //         color: Colors.blue,
-    //         fontSize: 16,
-    //         fontWeight: FontWeight.bold
-    //       ),
-    //     ),
-    //   ),
-    // ),
+   
 
             // ⬆️ Positioned дээр CATEGORY ICON тавина
+            
            Positioned(
   top: -40,
   left: 0,

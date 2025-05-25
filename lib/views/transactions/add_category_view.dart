@@ -21,6 +21,16 @@ class AddCategoryView extends StatefulWidget {
   @override
   State<AddCategoryView> createState() => _AddCategoryViewState();
 }
+String getTypeLabel(String type) {
+  switch (type) {
+    case 'income':
+      return 'Орлого';
+    case 'expense':
+      return 'Зарлага';
+    default:
+      return type;
+  }
+}
 
 class _AddCategoryViewState extends State<AddCategoryView> {
   final _formKey = GlobalKey<FormState>();
@@ -51,7 +61,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BackAppBar(title: widget.isEdit ? 'Edit Category' : 'Add Category'),
+      appBar: BackAppBar(title: widget.isEdit ? 'Ангилал засах' : 'Ангилал үүсгэх'),
       backgroundColor: Colors.white,
       body: BlueTextFieldTheme( // ✅ Theme wrap here
         child: SingleChildScrollView(
@@ -66,7 +76,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
   keyboardType: TextInputType.text,
   autofocus: true, // Name учраас number биш текст болгоно
   decoration: InputDecoration(
-    labelText: 'Category Name',
+    labelText: 'Ангиллын нэр',
     contentPadding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
     labelStyle: const TextStyle(
       color: Color.fromARGB(255, 131, 131, 131), fontWeight: FontWeight.w500
@@ -87,7 +97,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
   ),
   validator: (value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Please enter name';
+      return 'Ангиллын нэр оруулна уу!';
     }
     return null;
   },
@@ -102,10 +112,10 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                       iconSize: 32,
                       iconColor: Colors.black,
                       backgroundColor: Colors.white,
-                      title: const Text("Select Icon"),
+                      title: const Text("Дүрс сонгох"),
                       
-                      closeChild: const Text("Cancel", style: TextStyle(color: Colors.blue)),
-                      searchHintText: "Search icons...",
+                      closeChild: const Text("Цуцлах", style: TextStyle(color: Colors.blue)),
+                      searchHintText: "Дүрс хайх...",
                     );
                     if (icon != null) {
                       setState(() {
@@ -116,7 +126,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                   },
                   child: InputDecorator(
                     decoration: const InputDecoration(
-                      labelText: 'Pick Icon',
+                      labelText: 'Дүрс сонгох',
                       floatingLabelStyle: TextStyle(color: Color.fromARGB(221, 148, 148, 148),  fontWeight: FontWeight.bold), 
                       border: OutlineInputBorder(),
                     ),
@@ -125,7 +135,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                         Icon(selectedIcon ?? Icons.category, color: selectedIconColor),
                         const SizedBox(width: 10),
                         Text(
-  selectedIcon != null ? 'Icon Selected' : 'Choose an icon',
+  selectedIcon != null ? 'Дүрс сонгосон' : 'Дүрс сонгох',
   style: TextStyle(
     color: selectedIcon != null ? Colors.black : Colors.grey, // 🎯 Өнгө сонголт
     fontSize: 14,
@@ -139,7 +149,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
 
                 InputDecorator(
                   decoration: const InputDecoration(
-                    labelText: 'Icon Color',
+                    labelText: 'Дүрсний өнгө',
                     
                    floatingLabelStyle: TextStyle(color: Color.fromARGB(221, 148, 148, 148),  fontWeight: FontWeight.bold),
                     border: OutlineInputBorder(),
@@ -158,14 +168,14 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                       const SizedBox(width: 10),
                     TextButton(
   child: Text(
-    'Pick Color',
+    'Өнгө сонгох',
     style: TextStyle(color: selectedIconColor), // ✅ Сонгосон өнгө
   ),
   onPressed: () {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Select Icon Color'),
+        title: const Text('Дүрсний өнгө сонгох'),
         content: SingleChildScrollView(
           child: ColorPicker(
             pickerColor: selectedIconColor,
@@ -175,7 +185,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
         ),
         actions: [
           TextButton(
-            child: const Text('Done'),
+            child: const Text('Болсон'),
             onPressed: () => Navigator.of(context).pop(),
           )
         ],
@@ -192,24 +202,24 @@ class _AddCategoryViewState extends State<AddCategoryView> {
               Column(
   crossAxisAlignment: CrossAxisAlignment.start,
   children: [
-    Text("Category Type", style: TextStyle(fontSize: 14),),
+    Text("Ангиллын төрөл", style: TextStyle(fontSize: 14),),
    
     const SizedBox(height: 12),
     Wrap(
-      spacing: 20,
-      children: types.map((type) {
-        return CustomRadioButton(
-          label: type[0].toUpperCase() + type.substring(1).toLowerCase(),
-          value: type,
-          groupValue: selectedType,
-          onChanged: (value) {
-            setState(() {
-              selectedType = value!;
-            });
-          },
-        );
-      }).toList(),
-    ),
+  spacing: 20,
+  children: types.map((type) {
+    return CustomRadioButton(
+      label: getTypeLabel(type), // Одоо монголоор харагдана!
+      value: type,
+      groupValue: selectedType,
+      onChanged: (value) {
+        setState(() {
+          selectedType = value!;
+        });
+      },
+    );
+  }).toList(),
+),
   ],
 ),
 
@@ -225,7 +235,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
                     minimumSize: const Size.fromHeight(48),
                     backgroundColor: Colors.blue,
                   ),
-                  child: Text(widget.isEdit ? 'Save' : 'Create'),
+                  child: Text(widget.isEdit ? 'Засах' : 'Үүсгэх'),
                 ),
                 SizedBox(height: 10),
                 OutlinedButton(
@@ -238,7 +248,7 @@ class _AddCategoryViewState extends State<AddCategoryView> {
     ),
   ),
   child: const Text(
-    'Cancel',
+    'Цуцлах',
     style: TextStyle(color: Colors.blue),
   ),
 ),

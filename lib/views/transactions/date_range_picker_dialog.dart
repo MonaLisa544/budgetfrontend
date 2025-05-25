@@ -33,51 +33,93 @@ class _TimelineDateRangeDialogState extends State<TimelineDateRangeDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final Color blue = Colors.blue[700]!;
+
     return AlertDialog(
-      title: const Text("🗓 Хугацаа сонгох"),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      titlePadding: const EdgeInsets.only(top: 24, left: 24, right: 24, bottom: 0),
+      contentPadding: const EdgeInsets.only(top: 8, left: 12, right: 12, bottom: 24),
+      title: Center(
+        child: Text(
+          " Хугацаа сонгох",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: blue,
+            fontSize: 20,
+            letterSpacing: 0.2,
+          ),
+        ),
+      ),
       content: SizedBox(
         width: 320,
-        height: 400,
+        height: 410,
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            dp.RangePicker(
-              selectedPeriod: _selectedPeriod,
-              onChanged: (dp.DatePeriod newPeriod) {
-                setState(() => _selectedPeriod = newPeriod);
-              },
-              firstDate: _firstDate,
-              lastDate: _lastDate,
-              datePickerStyles: dp.DatePickerRangeStyles(
-                selectedPeriodLastDecoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: const BorderRadius.only(
-                    topRight: Radius.circular(10),
-                    bottomRight: Radius.circular(10),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.04),
+                    blurRadius: 12,
+                    spreadRadius: 1,
                   ),
-                ),
-                selectedPeriodStartDecoration: BoxDecoration(
-                  color: Colors.blue,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(10),
-                    bottomLeft: Radius.circular(10),
+                ],
+              ),
+              child: dp.RangePicker(
+                selectedPeriod: _selectedPeriod,
+                onChanged: (dp.DatePeriod newPeriod) {
+                  setState(() => _selectedPeriod = newPeriod);
+                },
+                firstDate: _firstDate,
+                lastDate: _lastDate,
+                datePickerStyles: dp.DatePickerRangeStyles(
+                  selectedPeriodLastDecoration: BoxDecoration(
+                    color: blue,
+                    borderRadius: const BorderRadius.only(
+                      topRight: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
                   ),
-                ),
-                selectedPeriodMiddleDecoration: BoxDecoration(
-                  color: Colors.blue.withOpacity(0.5),
-                  shape: BoxShape.rectangle,
+                  selectedPeriodStartDecoration: BoxDecoration(
+                    color: blue,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      bottomLeft: Radius.circular(10),
+                    ),
+                  ),
+                  selectedPeriodMiddleDecoration: BoxDecoration(
+                    color: blue.withOpacity(0.3),
+                    shape: BoxShape.rectangle,
+                  ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.check),
-              label: const Text("Тохируулах"),
-              onPressed: () {
-                Navigator.of(context).pop([
-                  _selectedPeriod.start,
-                  _selectedPeriod.end,
-                ]);
-              },
+            const SizedBox(height: 24),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  backgroundColor: blue, // ТОВЧНЫ ӨНГӨ!
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                icon: const Icon(Icons.check, size: 22),
+                label: const Text("Тохируулах"),
+                onPressed: () {
+                  Navigator.of(context).pop([
+                    _selectedPeriod.start,
+                    _selectedPeriod.end,
+                  ]);
+                },
+              ),
             ),
           ],
         ),

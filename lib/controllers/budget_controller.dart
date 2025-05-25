@@ -11,10 +11,10 @@ class BudgetController extends GetxController {
     super.onInit();
   }
 
-  void fetchBudgets() async {
+  Future<void> fetchBudgets({String? yearMonth}) async {
     try {
       isLoading(true);
-      var fetched = await ApiService.fetchBudgets();
+      var fetched = await ApiService.fetchBudgets(yearMonth: yearMonth);
       budgets.value = fetched;
     } catch (e) {
       print("Failed to fetch budgets: $e");
@@ -22,18 +22,19 @@ class BudgetController extends GetxController {
       isLoading(false);
     }
   }
-   Future<void> createBudget(BudgetModel budget) async {
+
+  Future<void> createBudget(BudgetModel budget) async {
     await ApiService.createBudget(budget);
-    fetchBudgets(); // ✅ автоматаар шинэчлэх
+    fetchBudgets(); // шинэчлэх
   }
 
   Future<void> updateBudget(int id, BudgetModel budget) async {
     await ApiService.updateBudget(id, budget);
-    fetchBudgets(); // ✅ автоматаар шинэчлэх
+    fetchBudgets(); // шинэчлэх
   }
 
   Future<void> deleteBudget(int id) async {
-  await ApiService.deleteBudget(id);
-  fetchBudgets(); // ✅ автоматаар шинэчлэх
-}
+    await ApiService.deleteBudget(id);
+    fetchBudgets(); // шинэчлэх
+  }
 }

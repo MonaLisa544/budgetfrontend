@@ -90,7 +90,7 @@ class _SignInViewState extends State<SignInView> {
                         FadeAnimation(
                           delay: 1,
                           child: const Text(
-                            "Please sign in to continue",
+                            "Үргэлжлүүлэхийн тулд нэвтэрнэ үү",
                             style: TextStyle(
                               color: Colors.white,
                               letterSpacing: 0.5,
@@ -129,7 +129,7 @@ class _SignInViewState extends State<SignInView> {
                                           : deaible,
                                   size: 20,
                                 ),
-                                hintText: 'Email',
+                                hintText: 'Мэйл',
                                 hintStyle: TextStyle(
                                   color:
                                       selected == FormData.email
@@ -206,7 +206,7 @@ class _SignInViewState extends State<SignInView> {
                                         () => ispasswordev = !ispasswordev,
                                       ),
                                 ),
-                                hintText: 'Password',
+                                hintText: 'Нууц үг ',
                                 hintStyle: TextStyle(
                                   color:
                                       selected == FormData.password
@@ -270,7 +270,7 @@ class _SignInViewState extends State<SignInView> {
                               ),
                             ),
                             child: Text(
-                              "Login",
+                              "Нэвтрэх",
                               style: TextStyle(
                                 color: Colors.white,
                                 letterSpacing: 0.5,
@@ -302,7 +302,7 @@ class _SignInViewState extends State<SignInView> {
                       );
                     }),
                     child: Text(
-                      "Can't Log In?",
+                      "Нууц үг мартсан?",
                       style: TextStyle(
                         color: Colors.white.withOpacity(0.9),
                         letterSpacing: 0.5,
@@ -318,7 +318,7 @@ class _SignInViewState extends State<SignInView> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const Text(
-                        "Don't have an account? ",
+                        "Та бүртгэлгүй байна уу? ",
                         style: TextStyle(
                           color: Colors.grey,
                           letterSpacing: 0.5,
@@ -336,7 +336,7 @@ class _SignInViewState extends State<SignInView> {
                           );
                         },
                         child: Text(
-                          "Sign up",
+                          "Бүртгүүлэх",
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.9),
                             fontWeight: FontWeight.bold,
