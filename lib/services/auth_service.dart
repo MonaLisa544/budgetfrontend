@@ -366,6 +366,49 @@ static Future<bool> updateProfile({
   }
 }
 
+// services/auth_service.dart дотор:
+static Future<bool> joinFamily({
+  required String familyName,
+  required String password,
+}) async {
+  try {
+    final token = await getToken();
+    if (token == null) {
+      print('❌ Токен олдсонгүй!');
+      return false;
+    }
+
+    final response = await dio.post(
+      '$_baseUrl/api/v1/families/join',
+      data: {
+        "family": {
+          "family_name": familyName,
+          "password": password,
+        }
+      },
+      options: Options(
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      ),
+    );
+
+    print('📦 Join Family Response: ${response.statusCode} - ${response.data}');
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      return true;
+    } else {
+      print('❌ Гэр бүлд нэгдэхэд алдаа: ${response.statusCode}');
+      return false;
+    }
+  } catch (e) {
+    print('❌ joinFamily error: $e');
+    return false;
+  }
+}
+
+
   // ---------------------------------------
 
    

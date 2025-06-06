@@ -104,6 +104,53 @@ class _ReportViewState extends State<ReportView> {
                   Center(
                     child: Column(
                       children: [
+                         // TextButton.icon(
+                                      //   style: TextButton.styleFrom(
+                                      //     padding: EdgeInsets.symmetric(vertical: 6),
+                                      //     minimumSize: Size.zero,
+                                      //     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                      //   ),
+                                      //   icon: const Icon(
+                                      //     Icons.calendar_today,
+                                      //     color: Color.fromARGB(255, 255, 255, 255),
+                                      //     size: 18,
+                                      //   ),
+                                      //   label: Text(
+                                      //     startDate != null && endDate != null
+                                      //         ? "${DateFormat('yyyy-MM-dd').format(startDate!)} → ${DateFormat('yyyy-MM-dd').format(endDate!)}"
+                                      //         : "🗓️ Хугацаа сонгох",
+                                      //     style: TextStyle(
+                                      //       color: Color.fromARGB(255, 255, 255, 255),
+                                      //       fontWeight: FontWeight.bold,
+                                      //     ),
+                                      //   ),
+                                      //   onPressed: () async {
+                                      //     final picked = await showDialog<List<DateTime>>(
+                                      //       context: context,
+                                      //       builder: (context) =>
+                                      //           TimelineDateRangeDialog(
+                                      //             initialStart: startDate,
+                                      //             initialEnd: endDate,
+                                      //           ),
+                                      //     );
+                                      //     if (picked != null && picked.length == 2) {
+                                      //       setState(() {
+                                      //         startDate = picked[0];
+                                      //         endDate = picked[1];
+                                      //       });
+                                      //     }
+                                      //   },
+                                      // ),
+                                      // SizedBox(width: 30),
+                                      // IconButton(
+                                      //   icon: Icon(
+                                      //     Icons.download_rounded,
+                                      //     color: Colors.white,
+                                      //   ),
+                                      //   onPressed: () {
+                                      //     // downloadTransaction(txn);
+                                      //   },
+                                      // ),
                         Text(
                           "Орлого",
                           style: TextStyle(

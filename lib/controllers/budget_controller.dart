@@ -7,7 +7,7 @@ class BudgetController extends GetxController {
 
   @override
   void onInit() {
-    fetchBudgets();
+    // fetchBudgets();
     super.onInit();
   }
 

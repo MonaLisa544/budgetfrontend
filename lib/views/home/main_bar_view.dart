@@ -32,7 +32,21 @@ class MainBarView extends StatelessWidget implements PreferredSizeWidget {
             children: [
              
              
-              const SizedBox(width: 20),
+              // const SizedBox(width: 20),
+               IconButton(
+  onPressed: () {
+    Get.to(() => ProfileView());
+  },
+  icon: Obx(() {
+    final user = Get.find<AuthController>().user.value;
+    return CircleAvatar(
+      radius: 24,
+      backgroundImage: user?.profilePhotoUrl != null
+          ? NetworkImage(user!.profilePhotoUrl!)
+          : const AssetImage("assets/img/default_profile.png") as ImageProvider,
+    );
+  }),
+),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -48,31 +62,18 @@ class MainBarView extends StatelessWidget implements PreferredSizeWidget {
                   ],
                 ),
               ),
-               if (showChartIcon) // зөвхөн true үед гаргана
-                IconCircleButton(
-                  iconData: Icons.show_chart,
-                  onPressed: () {Get.to(() => ReportView());},
-                ),
+              //  if (showChartIcon) // зөвхөн true үед гаргана
+              //   IconCircleButton(
+              //     iconData: Icons.show_chart,
+              //     onPressed: () {Get.to(() => ReportView());},
+              //   ),
               const SizedBox(width: 8),
               IconCircleButton(
                 iconData: Icons.notifications_none,
                 onPressed: () {Get.to(() => NotificationPage());},
               ),
               const SizedBox(width: 6),
-              IconButton(
-  onPressed: () {
-    Get.to(() => ProfileView());
-  },
-  icon: Obx(() {
-    final user = Get.find<AuthController>().user.value;
-    return CircleAvatar(
-      radius: 22,
-      backgroundImage: user?.profilePhotoUrl != null
-          ? NetworkImage(user!.profilePhotoUrl!)
-          : const AssetImage("assets/img/default_profile.png") as ImageProvider,
-    );
-  }),
-),
+             
             ],
           ),
         ),

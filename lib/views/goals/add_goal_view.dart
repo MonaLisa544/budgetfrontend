@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import 'package:budgetfrontend/controllers/goal_controller.dart';
 import 'package:budgetfrontend/models/goal_model.dart';
 import 'package:budgetfrontend/widgets/blue_field_text_theme.dart';
-import 'package:top_snackbar_flutter/custom_snack_bar.dart';
 import 'package:flutter/cupertino.dart';
 
 class AddGoalView extends StatefulWidget {

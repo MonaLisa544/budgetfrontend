@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:budgetfrontend/views/goals/goal_info_view.dart';
+import 'package:budgetfrontend/widgets/add_goal_dashed_boc.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:budgetfrontend/controllers/goal_controller.dart';
@@ -10,20 +11,16 @@ import 'package:intl/intl.dart';
 
 class GoalView extends StatefulWidget {
   const GoalView({super.key});
-
-  
-
   @override
   State<GoalView> createState() => _GoalViewState();
 }
-
-
 
 class _GoalViewState extends State<GoalView> {
   final selectedWallet = 'Saving'.obs;
   final selectedTabIndex = 0.obs;
   final selectedFilter = 'Active'.obs;
  final GoalController goalController = Get.put(GoalController());
+
 
  @override
 void initState() {
@@ -105,6 +102,7 @@ void initState() {
                       ],
                     ),
                     // const SizedBox(height: 12),
+                    
                     // Row(
                     //   mainAxisAlignment: MainAxisAlignment.end,
                     //   children: [
@@ -235,216 +233,165 @@ class GoalSection extends StatelessWidget {
       collapsedIconColor: Colors.white,
       title: Row(
         children: [
-          Icon(title.toLowerCase().contains('private') ? Icons.person_outline : Icons.groups_outlined, size: 20, color: Colors.white),
+          // Icon(title.toLowerCase().contains('private') ? Icons.person_outline : Icons.groups_outlined, size: 20, color: Colors.white),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: Color.fromARGB(255, 212, 212, 212)),
               overflow: TextOverflow.ellipsis,
             ),
           ),
         ],
       ),
       collapsedBackgroundColor: const Color.fromARGB(255, 148, 156, 176).withOpacity(0.3),
-      backgroundColor: const Color.fromARGB(255, 147, 168, 196).withOpacity(0.1),
+      backgroundColor: const Color.fromARGB(255, 166, 171, 189).withOpacity(0.1),
       childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       children: goals.map((goal) => GoalRow(title: goal.goalName, totalAmount: goal.targetAmount, savedAmount: goal.savedAmount, goal:goal, statuses: goal.monthlyStatuses.map((e) => e.status).toList().cast<String>(),)).toList(),
     );
   }
 }
 
-class LoanSection extends StatelessWidget {
-  final String title;
-  final List loans;
-
-  const LoanSection({super.key, required this.title, required this.loans});
-
-  @override
-  Widget build(BuildContext context) {
-    return ExpansionTile(
-      initiallyExpanded: true,
-      iconColor: Colors.white,
-      collapsedIconColor: Colors.white,
-      title: Row(
-        children: [
-          Icon(title.toLowerCase().contains('private') ? Icons.person_outline : Icons.groups_outlined, size: 20, color: Colors.white),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-      collapsedBackgroundColor: const Color.fromARGB(255, 106, 115, 138).withOpacity(0.3),
-      backgroundColor: const  Color.fromARGB(255, 147, 168, 196).withOpacity(0.1),
-      childrenPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      children: loans.map((loan) => GoalRow(title: loan.loanName, totalAmount: loan.totalAmountDue, savedAmount: loan.savedAmount,  goal:loan, statuses: loan.monthlyStatuses.map((e) => e.status).toList().cast<String>(),)).toList(),
-    );
-  }
-}
-
-
 class GoalRow extends StatelessWidget {
   final String title;
   final double totalAmount;
   final double savedAmount;
-  final dynamic goal; // 🔥 GoalModel object-оо авч явна!
-    final List<String> statuses;
-  
+  final dynamic goal;
+  final List<String> statuses;
 
   const GoalRow({
     super.key,
     required this.title,
     required this.totalAmount,
     required this.savedAmount,
-    required this.goal, // ✅ нэмлээ
+    required this.goal,
     required this.statuses,
   });
 
   @override
   Widget build(BuildContext context) {
+    final int totalSteps = calculateTotalSteps(goal.startDate, goal.expectedDate);
+    final int completedSteps = totalSteps > 0
+        ? (calculateCompletedSteps(goal.startDate)).clamp(0, totalSteps)
+        : 0;
+
+    // 👇 Тухайн зорилгын статусыг эндээс авна
+    final String status = getGoalStatus(goal);
+ // Жишээ: "Active" эсвэл "Completed"
+    final Color statusColor = status == "Active"
+        ? const Color.fromARGB(255, 104, 185, 146).withOpacity(0.5)
+        : Colors.blueGrey;
+
     double progress = totalAmount == 0 ? 0 : (savedAmount / totalAmount).clamp(0.0, 1.0);
     double monthlySaving = (totalAmount - savedAmount) / 7;
-    int monthsLeft = ((totalAmount - savedAmount) / (monthlySaving > 0 ? monthlySaving : 1)).ceil();
 
     return GestureDetector(
       onTap: () {
-        showGoalDetailDialog(context, goal); // 🔥 Гол дэлгэрэнгүйг харуулах
+        showGoalDetailDialog(context, goal);
       },
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                const Color.fromARGB(255, 26, 121, 199).withOpacity(0.2),
-                const Color.fromARGB(255, 17, 88, 194).withOpacity(0.7),
-              ],
-              stops: [0.0, 1.0],
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.05),
-                blurRadius: 20,
-                offset: const Offset(0, 8),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Зорилго',
-                  style: TextStyle(color: Colors.white70, fontSize: 12),
+        child: Stack(
+          children: [
+            // Main container
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color.fromARGB(255, 26, 121, 199).withOpacity(0.2),
+                    const Color.fromARGB(255, 17, 88, 194).withOpacity(0.7),
+                  ],
+                  stops: [0.0, 1.0],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color.fromARGB(255, 0, 0, 0).withOpacity(0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.blueAccent.withOpacity(0.7),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                     child: Text(
-  formatCurrency(totalAmount),
-  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-),
-
+                    const Text(
+                      'Зорилго',
+                      style: TextStyle(color: Colors.white70, fontSize: 12),
                     ),
+                    const SizedBox(height: 8),
                     Text(
-                      "March/April '24",
-                      style: const TextStyle(color: Colors.white60, fontSize: 12),
+                      title,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.blueAccent.withOpacity(0.7),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            formatCurrency(totalAmount),
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                        Text(
+                          formatMonthYear(goal.expectedDate),
+                          style: const TextStyle(color: Colors.white60, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    RichText(
+                      text: TextSpan(
+                        children: [
+                          const TextSpan(
+                            text: 'Сар бүр ',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          TextSpan(
+                            text: '${formatCurrency(monthlySaving)} ',
+                            style: const TextStyle(
+                              color: Colors.greenAccent,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const TextSpan(
+                            text: 'төлнө ',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                          TextSpan(
+                            text: '($totalSteps сарын турш)',
+                            style: const TextStyle(color: Colors.white60, fontSize: 12),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    SmoothProgressBar(totalSteps: totalSteps, completedSteps: completedSteps),
                   ],
                 ),
-                const SizedBox(height: 16),
-                RichText(
-                  text: TextSpan(
-                    children: [
-                      const TextSpan(
-                        text: 'Сар бүр ',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                     TextSpan(
-  text: '${formatCurrency(monthlySaving)} ',
-  style: const TextStyle(
-    color: Colors.greenAccent,
-    fontWeight: FontWeight.bold,
-  ),
-),
-                      const TextSpan(
-                        text: 'төлнө ',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      TextSpan(
-                        text: '($monthsLeft сарын турш)',
-                        style: const TextStyle(color: Colors.white60, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // SmoothProgressBar(statuses: statuses),
-                SmoothProgressBar(totalSteps: 7, completedSteps: 5,),
-              ],
+              ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-
-
-
-class AddGoalDashedBox extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const AddGoalDashedBox({super.key, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 10), // 👉 энд padding өгч байна
-      child: GestureDetector(
-        onTap: onTap,
-        child: CustomPaint(
-          painter: DashedBorderPainter(),
-          child: Container(
-            width: double.infinity,
-            height: 100,
-            alignment: Alignment.center,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20), // 👉 container дотор padding
-            child: const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.add_circle_outline, color: Colors.white70, size: 32),
-                SizedBox(height: 8),
-                Text('Шинэ зорилго нэмэх', style: TextStyle(color: Colors.white70, fontSize: 14)),
-              ],
+            // Status badge (overlay, баруун дээд)
+            Positioned(
+              right: 18,
+              top: 10,
+              child: statusBadge(status), // <-- badge-д өгнө
             ),
-          ),
+          ],
         ),
       ),
     );
@@ -455,14 +402,16 @@ class SmoothProgressBar extends StatelessWidget {
   final int totalSteps;
   final int completedSteps;
 
-  const SmoothProgressBar({
-    super.key,
-    required this.totalSteps,
-    required this.completedSteps,
-  });
+  const SmoothProgressBar({super.key, required this.totalSteps, required this.completedSteps});
 
   @override
   Widget build(BuildContext context) {
+    // Хамгийн багадаа 2 гэж заавал хамгаалалт тавьж болно
+    final int n = totalSteps < 2 ? 2 : totalSteps;
+    final int safeCompleted = completedSteps.clamp(0, n);
+
+    final progress = safeCompleted / n;
+
     return SizedBox(
       height: 40,
       child: Stack(
@@ -476,14 +425,18 @@ class SmoothProgressBar extends StatelessWidget {
               borderRadius: BorderRadius.circular(2),
             ),
           ),
-          // Completed line
-          FractionallySizedBox(
-            widthFactor: completedSteps / totalSteps,
-            child: Container(
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.cyanAccent,
-                borderRadius: BorderRadius.circular(2),
+          // Animated completed line
+          TweenAnimationBuilder<double>(
+            tween: Tween(begin: 0, end: progress),
+            duration: const Duration(milliseconds: 600),
+            builder: (context, value, child) => FractionallySizedBox(
+              widthFactor: value,
+              child: Container(
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.cyanAccent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
             ),
           ),
@@ -491,8 +444,8 @@ class SmoothProgressBar extends StatelessWidget {
           Positioned.fill(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(totalSteps, (index) {
-                bool isCompleted = index < completedSteps;
+              children: List.generate(n, (index) {
+                bool isCompleted = index < safeCompleted;
                 return Stack(
                   alignment: Alignment.center,
                   children: [
@@ -505,7 +458,8 @@ class SmoothProgressBar extends StatelessWidget {
                           color: Colors.cyanAccent.withOpacity(0.2),
                         ),
                       ),
-                    Container(
+                    AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
                       width: isCompleted ? 12 : 8,
                       height: isCompleted ? 12 : 8,
                       decoration: BoxDecoration(
@@ -525,149 +479,62 @@ class SmoothProgressBar extends StatelessWidget {
   }
 }
 
-// class SmoothProgressBar extends StatelessWidget {
-//   final List<String> statuses; // ['success', 'pending', 'fail', ...]
 
-//   const SmoothProgressBar({
-//     super.key,
-//     required this.statuses,
-//   });
 
-//   @override
-//   Widget build(BuildContext context) {
-//     int totalSteps = statuses.length;
-//     int completedSteps = statuses
-//         .where((status) => status == 'success' || status == 'fail')
-//         .length;
-
-//     return SizedBox(
-//       height: 40,
-//       child: Stack(
-//         alignment: Alignment.centerLeft,
-//         children: [
-//           // Background line (full width, scrollable)
-//           ListView.builder(
-//             scrollDirection: Axis.horizontal,
-//             physics: const BouncingScrollPhysics(),
-//             itemCount: 1,
-//             itemBuilder: (context, _) {
-//               return Container(
-//                 width: totalSteps * 30, // багана тутамд 30px
-//                 height: 4,
-//                 decoration: BoxDecoration(
-//                   color: Colors.blue.shade900,
-//                   borderRadius: BorderRadius.circular(2),
-//                 ),
-//               );
-//             },
-//             shrinkWrap: true,
-//           ),
-//           // Completed line (success + fail, scrollable)
-//           Positioned.fill(
-//             child: Align(
-//               alignment: Alignment.centerLeft,
-//               child: FractionallySizedBox(
-//                 widthFactor: totalSteps == 0 ? 0 : completedSteps / totalSteps,
-//                 child: Container(
-//                   height: 4,
-//                   width: totalSteps * 30,
-//                   decoration: BoxDecoration(
-//                     color: Colors.cyanAccent,
-//                     borderRadius: BorderRadius.circular(2),
-//                   ),
-//                 ),
-//               ),
-//             ),
-//           ),
-//           // Circles (scrollable)
-//           ListView.builder(
-//             scrollDirection: Axis.horizontal,
-//             physics: const BouncingScrollPhysics(),
-//             itemCount: totalSteps,
-//             itemBuilder: (context, index) {
-//               final status = statuses[index];
-//               bool isCompleted = status == 'success' || status == 'fail';
-//               return Container(
-//                 width: 30,
-//                 alignment: Alignment.center,
-//                 child: Stack(
-//                   alignment: Alignment.center,
-//                   children: [
-//                     if (isCompleted)
-//                       Container(
-//                         width: 24,
-//                         height: 24,
-//                         decoration: BoxDecoration(
-//                           shape: BoxShape.circle,
-//                           color: Colors.cyanAccent.withOpacity(0.2),
-//                         ),
-//                       ),
-//                     Container(
-//                       width: isCompleted ? 12 : 8,
-//                       height: isCompleted ? 12 : 8,
-//                       decoration: BoxDecoration(
-//                         color: isCompleted
-//                             ? (status == 'success'
-//                                 ? Colors.greenAccent
-//                                 : Colors.redAccent)
-//                             : Colors.blue.shade900,
-//                         shape: BoxShape.circle,
-//                         border: Border.all(color: Colors.white24, width: 1),
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               );
-//             },
-//             shrinkWrap: true,
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-class DashedBorderPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    const dashWidth = 6.0;
-    const dashSpace = 4.0;
-    final paint = Paint()
-      ..color = Colors.grey.withOpacity(0.5)
-      ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
-
-    final path = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Offset.zero & size,
-        const Radius.circular(12),
-      ));
-
-    drawDashedPath(canvas, path, paint, dashWidth, dashSpace);
-  }
-
-  void drawDashedPath(Canvas canvas, Path path, Paint paint, double dashWidth, double dashSpace) {
-    final metrics = path.computeMetrics();
-    for (final metric in metrics) {
-      double distance = 0.0;
-      while (distance < metric.length) {
-        final length = dashWidth;
-        canvas.drawPath(
-          metric.extractPath(distance, distance + length),
-          paint,
-        );
-        distance += dashWidth + dashSpace;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
 
 String formatCurrency(double value, {bool symbolFirst = true}) {
   final formatter = NumberFormat("#,##0", "mn");
   return symbolFirst
       ? "₮ ${formatter.format(value)}"
       : "${formatter.format(value)} ₮";
+}
+
+String formatMonthYear(String date) {
+  try {
+    final dt = DateTime.parse(date);
+    // "2025-10-01" -> "2025 оны 10-р сар"
+    return "${dt.year} оны ${dt.month}-р сар";
+  } catch (e) {
+    return '';
+  }
+}
+
+int calculateTotalSteps(String startDate, String expectedDate) {
+  final start = DateTime.parse(startDate);
+  final end = DateTime.parse(expectedDate);
+  return (end.year - start.year) * 12 + (end.month - start.month) + 1;
+}
+
+int calculateCompletedSteps(String startDate) {
+  final start = DateTime.parse(startDate);
+  final now = DateTime.now();
+  int completed = (now.year - start.year) * 12 + (now.month - start.month) + 1;
+  return completed < 0 ? 0 : completed;
+}
+Widget statusBadge(String status) {
+  final color = status == "Active" ? const Color.fromARGB(255, 113, 224, 117).withOpacity(0.5) : Colors.blueGrey;
+  final text = status == "Active" ? "Урсгал" : "Дууссан";
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Text(
+      text,
+      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+    ),
+  );
+}
+
+String getGoalStatus(dynamic goal) {
+  final now = DateTime.now();
+  final expected = DateTime.parse(goal.expectedDate);
+  if (goal.savedAmount >= goal.targetAmount) {
+    return "Completed";
+  } else if (now.isAfter(expected)) {
+    return "Completed";
+  } else {
+    return "Active"; // Урсгал
+  }
 }

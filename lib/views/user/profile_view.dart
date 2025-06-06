@@ -3,6 +3,7 @@ import 'package:budgetfrontend/controllers/auth_controller.dart';
 import 'package:budgetfrontend/services/auth_service.dart';
 import 'package:budgetfrontend/views/home/back_app_bar.dart';
 import 'package:budgetfrontend/views/login/sign_in_view.dart';
+import 'package:budgetfrontend/views/report/export.dart';
 import 'package:budgetfrontend/views/transactions/category_view.dart';
 import 'package:budgetfrontend/views/user/edit_profile.dart';
 import 'package:budgetfrontend/views/user/family_view.dart';
@@ -159,6 +160,18 @@ class _ProfileViewState extends State<ProfileView> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => FamilyScreen()),
+    );
+  },
+                        ),
+                        const Divider(height: 1),
+
+                           _ProfileTile(
+                          icon: Icons.import_export,
+                          text: 'Тайлан хэвлэх',
+                           onTap: () {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ExportDataScreen()),
     );
   },
                         ),

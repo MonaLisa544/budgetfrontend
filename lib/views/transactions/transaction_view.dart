@@ -1,16 +1,17 @@
 import 'dart:ui';
+import 'package:budgetfrontend/controllers/wallet_controller.dart';
 import 'package:budgetfrontend/models/category_model.dart';
 import 'package:budgetfrontend/models/transaction_model.dart';
 import 'package:budgetfrontend/views/home/main_bar_view.dart';
 import 'package:budgetfrontend/views/transactions/add_transaction_view.dart';
-import 'package:budgetfrontend/views/transactions/category_selecter_dialog.dart';
 import 'package:budgetfrontend/views/transactions/transaction_info_view.dart';
-import 'package:budgetfrontend/widgets/transaction_item.dart';
+import 'package:budgetfrontend/widgets/monthly_picker.dart';
+import 'package:budgetfrontend/widgets/transaction_list.dart';
+import 'package:budgetfrontend/widgets/wallet_summary.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 import 'package:budgetfrontend/controllers/transaction_controller.dart';
-import 'package:budgetfrontend/views/transactions/date_range_picker_dialog.dart';
 
 class TransactionView extends StatefulWidget {
   const TransactionView({super.key});
@@ -27,6 +28,15 @@ class _TransactionViewState extends State<TransactionView> {
   CategoryModel? selectedCategory;
 
   final transactionController = Get.find<TransactionController>();
+  final walletController = Get.find<WalletController>();
+
+  final ScrollController _scrollController = ScrollController();
+
+@override
+void dispose() {
+  _scrollController.dispose();
+  super.dispose();
+}
 
   DateTime? startDate;
   DateTime? endDate;
@@ -34,8 +44,9 @@ class _TransactionViewState extends State<TransactionView> {
   @override
   void initState() {
     super.initState();
-    startDate = DateTime.now().subtract(const Duration(days: 7));
-    endDate = DateTime.now();
+    final now = DateTime.now();
+    startDate = DateTime(now.year, now.month, 1);
+    endDate = DateTime(now.year, now.month + 1, 0);
     transactionController.loadTransactions();
   }
 
@@ -59,7 +70,6 @@ class _TransactionViewState extends State<TransactionView> {
           ),
           body: buildBody(),
         ),
-
         if (_isAddedTransaction) ...[
           Positioned.fill(
             child: GestureDetector(
@@ -129,6 +139,7 @@ class _TransactionViewState extends State<TransactionView> {
     return Stack(
       fit: StackFit.expand,
       children: [
+        // Background
         Image.asset('assets/background/background77.jpeg', fit: BoxFit.cover),
         Positioned.fill(
           child: BackdropFilter(
@@ -142,441 +153,419 @@ class _TransactionViewState extends State<TransactionView> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Colors.transparent,
-                  Color.fromARGB(255, 57, 186, 196),
-                ],
+                colors: [Colors.transparent, Color.fromARGB(255, 57, 186, 196)],
                 stops: [0.5, 1.0],
               ),
             ),
           ),
         ),
         SafeArea(
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10.0,
-                vertical: 10.0,
-              ),
-              child: Obx(() {
-                final transactions =
-                    transactionController.transactions.where((txn) {
-                  // ✅ Wallet filter
-                  if (selectedWallet == 'Хувийн гүйлгээ' &&
-                      txn.walletType != 'private') return false;
-                  if (selectedWallet == 'Гэр бүлийн гүйлгээ' &&
-                      txn.walletType != 'family') return false;
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 0.0,
+              vertical: 10.0,
+            ),
+            child: Obx(() {
+              final allTransactions = transactionController.transactions;
+              final filteredTransactions = filterTransactions(allTransactions);
 
-                  // ✅ Date filter
-                  if (selectedDate != null &&
-                      DateFormat(
-                        'yyyy-MM-dd',
-                      ).format(DateTime.parse(txn.transactionDate)) !=
-                          DateFormat('yyyy-MM-dd').format(selectedDate!)) {
-                    return false;
-                  }
+  final incomeExpense = calculateIncomeExpense(filteredTransactions);
 
-                  // ✅ Income / Expense / All filter
-                  if (selectedType == 'Орлого' && txn.transactionType != 'income') {
-                    return false;
-                  }
-                  if (selectedType == 'Зарлага' && txn.transactionType != 'expense') {
-                    return false;
-                  }
-                  // selectedType == 'Бүгд' бол шалгахгүй
-                  return true;
-                }).toList();
 
-                final balances = calculateBalances(
-                  transactionController.transactions,
-                );
+              final balances = calculateBalances(allTransactions);
 
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    DefaultTabController(
-                      length: 2,
-                      child: Column(
-                        children: [
-                          TabBar(
-                            indicatorColor: Colors.white,
-                            labelColor: Colors.white,
-                            unselectedLabelColor: Colors.white60,
-                            tabs: const [
-                              Tab(text: "Хувийн гүйлгээ"),
-                              Tab(text: "Гэр бүлийн гүйлгээ"),
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  DefaultTabController(
+                    length: 2,
+                    child: Column(
+                      children: [
+                        TabBar(
+                          indicatorColor: Colors.white,
+                          labelColor: Colors.white,
+                          unselectedLabelColor: Colors.white60,
+                          tabs: const [
+                            Tab(text: "Хувийн гүйлгээ"),
+                            Tab(text: "Гэр бүлийн гүйлгээ"),
+                          ],
+                          onTap: (index) {
+                            setState(() {
+                              selectedWallet =
+                                  [
+                                    'Хувийн гүйлгээ',
+                                    'Гэр бүлийн гүйлгээ',
+                                  ][index];
+                              // Ангилалын сонголт цуцална
+                              selectedCategory = null;
+                            });
+                          },
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: Offset(0, 3),
+                              ),
                             ],
-                            onTap: (index) {
-                              setState(() {
-                                selectedWallet =
-                                    ['Хувийн гүйлгээ', 'Гэр бүлийн гүйлгээ'][index];
-                              });
-                            },
                           ),
-                          SizedBox(height: 12),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.05),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.white.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: Offset(0, 3),
-                                ),
-                              ],
-                            ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(16),
-                              child: BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            SizedBox(width: 30),
-                                            TextButton.icon(
-                                              style: TextButton.styleFrom(
-                                                padding: EdgeInsets.symmetric(vertical: 6),
-                                                minimumSize: Size.zero,
-                                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                              ),
-                                              icon: const Icon(
-                                                Icons.calendar_today,
-                                                color: Color.fromARGB(255, 38, 217, 230),
-                                                size: 18,
-                                              ),
-                                              label: Text(
-                                                startDate != null && endDate != null
-                                                    ? "${DateFormat('yyyy-MM-dd').format(startDate!)} → ${DateFormat('yyyy-MM-dd').format(endDate!)}"
-                                                    : "🗓️ Хугацаа сонгох",
-                                                style: TextStyle(
-                                                  color: Color.fromARGB(255, 38, 217, 230),
-                                                  fontWeight: FontWeight.bold
-                                                ),
-                                              ),
-                                              onPressed: () async {
-                                                final picked = await showDialog<List<DateTime>>(
-                                                  context: context,
-                                                  builder: (context) =>
-                                                      TimelineDateRangeDialog(
-                                                        initialStart: startDate,
-                                                        initialEnd: endDate,
-                                                      ),
-                                                );
-                                                if (picked != null && picked.length == 2) {
-                                                  setState(() {
-                                                    startDate = picked[0];
-                                                    endDate = picked[1];
-                                                  });
-                                                }
-                                              },
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  SizedBox(height: 15),
+                                  MonthYearPickerButton(
+                                    initialDate: DateTime.now(),
+                                    onChanged: (date) {
+                                      setState(() {
+                                        startDate = DateTime(
+                                          date.year,
+                                          date.month,
+                                          1,
+                                        );
+                                        endDate = DateTime(
+                                          date.year,
+                                          date.month + 1,
+                                          0,
+                                        );
+                                        selectedCategory =
+                                            null; // Сонголтыг цуцална
+                                      });
+                                    },
+                                  ),
+                                  SizedBox(height: 10),
+                                  Obx(() {
+                                    double balance = 0.0;
+                                    if (selectedWallet == "Хувийн гүйлгээ") {
+                                      balance =
+                                          walletController
+                                              .myWallet
+                                              .value
+                                              ?.balance ??
+                                          0.0;
+                                    } else if (selectedWallet ==
+                                        "Гэр бүлийн гүйлгээ") {
+                                      balance =
+                                          walletController
+                                              .familyWallet
+                                              .value
+                                              ?.balance ??
+                                          0.0;
+                                    }
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                        horizontal: 18,
+                                      ),
+                                      child: Column(
+                                        children: [
+                                          Text(
+                                            " ${formatCurrency(balance)}",
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 30,
+                                              color: Colors.white,
                                             ),
-                                            SizedBox(width: 30),
-
-                                             IconButton(
-      icon: Icon(Icons.download_rounded, color: Colors.white),
-      onPressed: () {
-        // downloadTransaction(txn);
-      },
-    ),
-                                          ],
-                                        ),
-                                        // Row(
-                                        //   mainAxisAlignment: MainAxisAlignment.start,
-                                        //   children: [
-                                        //     SizedBox(width: 10),
-                                        //     TextButton.icon(
-                                        //       style: TextButton.styleFrom(
-                                        //         padding: EdgeInsets.symmetric(vertical: 3),
-                                        //         minimumSize: Size.zero,
-                                        //         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                        //       ),
-                                        //       icon: const Icon(
-                                        //         Icons.category,
-                                        //         color: Color.fromARGB(255, 255, 255, 255),
-                                        //       ),
-                                        //       label: Text(
-                                        //         selectedCategory?.categoryName ?? 'Ангилал сонгох',
-                                        //         style: const TextStyle(
-                                        //           color: Color.fromARGB(255, 255, 255, 255),
-                                        //         ),
-                                        //       ),
-                                        //       onPressed: () async {
-                                        //         final selected = await showCategorySelectorDialogByType(
-                                        //           context: context,
-                                        //           type: selectedType.toLowerCase(),
-                                        //           selectedCategory: selectedCategory,
-                                        //         );
-                                        //         if (selected != null) {
-                                        //           setState(() => selectedCategory = selected);
-                                        //         }
-                                        //       },
-                                        //     ),
-                                        //   ],
-                                        // ),
-                        //                  Row(
-                        //   mainAxisAlignment: MainAxisAlignment.center,
-                        //   children: [
-                        //     _buildKpiCard("Орлого", "₮ 3,000,000", Colors.greenAccent),
-                        //     SizedBox(width: 15),
-                        //     _buildKpiCard("Зарлага", "₮ 2,500,000", Colors.redAccent)
-                        //   ],
-                        // ),
-                        walletSummary(balances),
-
-                                        SizedBox(height: 4),
-                                        filterChips(),
-                                        SizedBox(height: 8),
-                                      ],
-                                    ),
-                                  ],
-                                ),
+                                          ),
+                                          Text(
+                                            "дансны үлдэгдэл",
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: const Color.fromARGB(
+                                                255,
+                                                223,
+                                                223,
+                                                223,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }),
+                                  
+                                 WalletSummary(
+                                  
+  income: incomeExpense[selectedWallet]?['income'] ?? 0.0,
+  expense: incomeExpense[selectedWallet]?['expense'] ?? 0.0,
+  formatCurrency: formatCurrency,
+),
+                                ],
                               ),
                             ),
                           ),
-                          transactionList(transactions),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                );
-              }),
-            ),
+                  ),
+                ],
+              );
+            }),
           ),
         ),
+        // Доод DraggableScrollableSheet
+        Obx(() {
+          final allTransactions = transactionController.transactions;
+          final filteredTransactions = filterTransactions(allTransactions);
+
+          return DraggableScrollableSheet(
+            initialChildSize: 0.55,
+            minChildSize: 0.5,
+            maxChildSize: 0.9,
+            builder:
+                (context, scrollController) => Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(36.0),
+                      topRight: Radius.circular(36.0),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color.fromARGB(
+                          255,
+                          255,
+                          255,
+                          255,
+                        ).withOpacity(0.08),
+                        spreadRadius: 2,
+                        blurRadius: 24,
+                        offset: Offset(0, -8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      SizedBox(height: 8),
+                      Container(
+                        width: 50,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          SizedBox(width: 25),
+                          Text(
+                            "Ангилал",
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500,
+                              color: const Color.fromARGB(255, 136, 136, 136),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 5),
+                      spendAnalysis(transactionController.transactions),
+                      SizedBox(height: 5),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            "Нийт гүйлгээ",
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Color.fromARGB(255, 168, 168, 168),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Flexible(
+      child: TransactionListWithScroll(
+        transactions: filteredTransactions,
+        scrollController: scrollController,
+        formatCurrency: formatCurrency,
+        showTransactionDetailDialog: showTransactionDetailDialog,
+      ),),
+      SizedBox(height: 30),
+                    ],
+                  ),
+                ),
+          );
+        }),
       ],
     );
   }
 
-  // Widget balanceDisplay(Map<String, double> balances) {
-  //   return Container(
-  //     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-  //     child: Row(
-  //       children: [
-  //         Text(
-  //           'Үлдэгдэл:  ',
-  //           style: TextStyle(
-  //             color: Color.fromARGB(255, 158, 162, 177),
-  //             fontSize: 18,
-  //             fontWeight: FontWeight.bold,
-  //           ),
-  //         ),
-  //         Text(
-  //           "\$${balances[selectedWallet]!.toStringAsFixed(2)}",
-  //           style: TextStyle(
-  //             color: Color.fromARGB(255, 158, 162, 177),
-  //             fontSize: 20,
-  //             fontWeight: FontWeight.bold,
-  //           ),
-  //         ),
-  //       ],
-  //     ),
-  //   );
-  // }
+  // Ангилал дээр дарсан үед filter хийгдэх функц
+  List<TransactionModel> filterTransactions(
+    List<TransactionModel> allTransactions,
+  ) {
+    return allTransactions.where((txn) {
+      if (selectedWallet == 'Хувийн гүйлгээ' && txn.walletType != 'private')
+        return false;
+      if (selectedWallet == 'Гэр бүлийн гүйлгээ' && txn.walletType != 'family')
+        return false;
+      if (startDate != null && endDate != null) {
+        final txnDate = DateTime.parse(txn.transactionDate);
+        if (txnDate.isBefore(startDate!) || txnDate.isAfter(endDate!))
+          return false;
+      }
+      if (selectedType == 'Орлого' && txn.transactionType != 'income')
+        return false;
+      if (selectedType == 'Зарлага' && txn.transactionType != 'expense')
+        return false;
+      // Category filter
+      if (selectedCategory != null &&
+          txn.category?.categoryName != selectedCategory!.categoryName)
+        return false;
+      return true;
+    }).toList();
+  }
 
-  Widget walletSummary(Map<String, double> balances) {
-  return Row(
-    mainAxisAlignment: MainAxisAlignment.center,
-    children: [
-      walletCard(
-        "Нийт орлого:",
-        Icons.arrow_upward,
-        balances[selectedWallet] ?? 0.0,
-      ),
-      SizedBox(width: 5),
-      walletCard(
-        "Нийт зарлага:",
-        Icons.arrow_downward,
-        balances[selectedWallet] ?? 0.0,
+  // Spend Analysis Widget
+ Widget spendAnalysis(List<TransactionModel> transactions) {
+  Map<int, double> categoryExpenseTotals = {};
+  Map<int, double> categoryIncomeTotals = {};
+  double totalExpense = 0.0;
+  double totalIncome = 0.0;
+
+  for (var txn in transactions) {
+    if (txn.transactionType == 'expense') {
+      totalExpense += txn.transactionAmount;
+      categoryExpenseTotals[txn.categoryId] =
+          (categoryExpenseTotals[txn.categoryId] ?? 0) + txn.transactionAmount;
+    } else if (txn.transactionType == 'income') {
+      totalIncome += txn.transactionAmount;
+      categoryIncomeTotals[txn.categoryId] =
+          (categoryIncomeTotals[txn.categoryId] ?? 0) + txn.transactionAmount;
+    }
+  }
+
+  final categoryIds = <int>{
+    ...categoryExpenseTotals.keys,
+    ...categoryIncomeTotals.keys,
+  }.toList();
+
+  return SizedBox(
+    height: 110,
+    child: ListView.builder(
+      scrollDirection: Axis.horizontal,
+      
+      itemCount: categoryIds.length,
+      itemBuilder: (context, index) {
+        final catId = categoryIds[index];
+        final expense = categoryExpenseTotals[catId] ?? 0;
+        final income = categoryIncomeTotals[catId] ?? 0;
+        final expensePercent = totalExpense == 0 ? 0 : (expense / totalExpense * 100).round();
+        final incomePercent = totalIncome == 0 ? 0 : (income / totalIncome * 100).round();
+
+        final catTxn = transactions.firstWhere(
+          (txn) => txn.categoryId == catId && txn.category != null,
+          orElse: () => transactions.firstWhere((txn) => txn.categoryId == catId),
+        ).category!;
+
+        final isSelected = selectedCategory?.categoryName == catTxn.categoryName;
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              if (isSelected) {
+                selectedCategory = null;
+              } else {
+                selectedCategory = catTxn;
+              }
+            });
+          },
+          child: Container(
+            width: 100,
+            margin: EdgeInsets.symmetric(horizontal: 2),
+            decoration: BoxDecoration(
+              color: isSelected ? catTxn.iconColor!.withOpacity(0.1) : Colors.white,
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+              Container(
+  decoration: BoxDecoration(
+    shape: BoxShape.circle,
+    boxShadow: [
+      BoxShadow(
+        color: catTxn.iconColor!.withOpacity(0.30), // илүү glow мэдрэмжтэй болгоё
+        blurRadius: 14,
+        spreadRadius: 2,
+        offset: Offset(0, 3),
       ),
     ],
-  );
-}
-
-Widget walletCard(String label, IconData icon, double value) {
-  return Container(
-    height: 60,
-    width: 160,
-    padding: EdgeInsets.symmetric(horizontal: 7, vertical: 10),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(icon, size: 14, color: Color.fromARGB(255, 255, 255, 255)),
-            SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: Color.fromARGB(255, 237, 236, 236),
-                fontSize: 12,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: 5),
-        Text(
-          formatCurrency(value), // <<<<<<<<<<<<<<<<<<
-          style: TextStyle(
-            color: Color.fromARGB(255, 255, 255, 255),
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+  ),
+  child: CircleAvatar(
+    radius: 23, // жаахан томруулж илүү "glow"
+    backgroundColor: Colors.white,
+    child: Icon(
+      catTxn.iconData,
+      color: catTxn.iconColor,
+      size: 25,
+      shadows: [
+        Shadow(
+          color: catTxn.iconColor!.withOpacity(0.21),
+          blurRadius: 6,
         ),
       ],
+    ),
+  ),
+),
+
+                SizedBox(height: 4),
+                Text(
+                  catTxn.categoryName,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                    color: Colors.grey[700],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 4),
+                // Хоёр хувь зэрэг харуулна
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (income > 0)
+                      Text(
+                        "+$incomePercent%",
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                    if (expense > 0)
+                      Text(
+                        "-$expensePercent%",
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     ),
   );
 }
 
-
-
-  Widget filterChips() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 0),
-      child: Container(
-        height: 37,
-        decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 3, 12, 31).withOpacity(0.8),
-          borderRadius: BorderRadius.circular(8),
-          boxShadow: [
-            BoxShadow(
-              color: Color.fromARGB(255, 2, 19, 53).withOpacity(0.8),
-              blurRadius: 5,
-              offset: Offset(0, 0),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: ['Бүгд', 'Орлого', 'Зарлага'].map((type) {
-            return ChoiceChip(
-              label: Text(
-                type,
-                style: TextStyle(
-                  color: selectedType == type
-                      ? const Color.fromARGB(255, 0, 0, 0)
-                      : const Color.fromARGB(255, 255, 255, 255),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              selected: selectedType == type,
-              selectedColor: const Color.fromARGB(255, 255, 255, 255),
-              backgroundColor:
-                  const Color.fromARGB(255, 3, 12, 31),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-              onSelected: (_) => setState(() => selectedType = type),
-            );
-          }).toList(),
-        ),
-      ),
-    );
-  }
-  Widget transactionList(List<TransactionModel> transactions) {
-    final grouped = groupTransactionsByDate(transactions);
-
-    if (transactions.isEmpty) {
-      return Center(
-        child: Text(
-          'Гүйлгээ олдсонгүй.',
-          style: TextStyle(color: Colors.white70, fontSize: 16),
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      padding: const EdgeInsets.only(bottom: 200),
-      child: Column(
-        children: grouped.entries.map((entry) {
-          final date = entry.key;
-          final txnList = entry.value;
-
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 🗓️ Огнооны гарчиг
-             Padding(
-               padding: const EdgeInsets.all(5.0),
-               child: Container(
-                 width: double.infinity, // 🔥 Бүхэлдээ дэлгэцийн өргөний хэмжээгээр тэлнэ!
-                 decoration: BoxDecoration(
-                   color: Colors.white.withOpacity(0.1),
-                 ),
-                 child: Padding(
-                   padding: const EdgeInsets.symmetric(
-                     vertical: 7.0,
-                     horizontal: 16,
-                   ),
-                   child: Text(
-                     date,
-                     style: const TextStyle(
-                       fontSize: 13.5,
-                       fontWeight: FontWeight.bold,
-                       color: Color.fromARGB(255, 30, 183, 194),
-                     ),
-                   ),
-                 ),
-               ),
-             ),
-
-              // 💳 Тухайн өдрийн гүйлгээнүүд
-              ...txnList.map((txn) {
-               final isIncome = txn.transactionType == 'income';
-final amountText = (isIncome ? '+ ' : '- ') +
-    formatCurrency(txn.transactionAmount); // <<<<<<<<<<<<
-
-                final dateStr = txn.transactionDate;
-
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 1.0,
-                    horizontal: 0.0,
-                  ),
-                  child: TransactionItem(
-                    iconData: txn.category?.iconData ?? Icons.category,
-                    iconColor: txn.category?.safeColor ?? Colors.grey,
-                    title: txn.transactionName,
-                    subtitle:  txn.category?.categoryName ?? txn.transactionName,
-                    amount: amountText,
-                    // time: dateStr,
-                    onPressed: () {
-                      showTransactionDetailDialog(context, txn);
-                      print('Item clicked: ${txn.transactionName}');
-                    },
-                  ),
-                );
-              }).toList(),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Map<String, List<TransactionModel>> groupTransactionsByDate(
-    List<TransactionModel> transactions,
-  ) {
-    Map<String, List<TransactionModel>> grouped = {};
-
-    for (var txn in transactions) {
-      final date = DateFormat(
-        'yyyy-MM-dd',
-      ).format(DateTime.parse(txn.transactionDate));
-      if (!grouped.containsKey(date)) {
-        grouped[date] = [];
-      }
-      grouped[date]!.add(txn);
-    }
-
-    return grouped;
-  }
 
   Map<String, double> calculateBalances(List<TransactionModel> transactions) {
     double familyBalance = 0.0;
@@ -591,29 +580,48 @@ final amountText = (isIncome ? '+ ' : '- ') +
         privateBalance += amount;
       }
     }
-    return {'Гэр бүлийн гүйлгээ': familyBalance, 'Хувийн гүйлгээ': privateBalance};
+    return {
+      'Гэр бүлийн гүйлгээ': familyBalance,
+      'Хувийн гүйлгээ': privateBalance,
+    };
   }
 
-  String getWalletName(String? walletType) {
-    if (walletType == 'family') return 'Гэр бүлийн гүйлгээ';
-    if (walletType == 'private') return 'Хувийн гүйлгээ';
-    return 'Тодорхойгүй';
-  }
-
-  IconData getWalletIcon(String? walletType) {
-    if (walletType == 'family') return Icons.family_restroom;
-    if (walletType == 'private') return Icons.account_circle;
-    return Icons.question_mark;
-  }
-
-
-  
   String formatCurrency(double value, {bool symbolFirst = true}) {
-  final formatter = NumberFormat("#,##0", "mn");
-  return symbolFirst
-      ? "${formatter.format(value)} ₮"
-      : "₮ ${formatter.format(value)}";
-}
+    final formatter = NumberFormat("#,##0", "mn");
+    return symbolFirst
+        ? "${formatter.format(value)} ₮"
+        : "₮ ${formatter.format(value)}";
+  }
 
-}
+  void showTransactionDetailDialog(BuildContext context, TransactionModel txn) {
+    // Transaction info-г үзүүлэх өөрийнхөө dialog эсвэл дэлгэцийг дуудаарай.
+    // Get.to(() => TransactionInfoView(transaction: txn));
+  }
+  Map<String, Map<String, double>> calculateIncomeExpense(List<TransactionModel> transactions) {
+  // {walletType: {income: ..., expense: ...}}
+  double familyIncome = 0.0, familyExpense = 0.0;
+  double privateIncome = 0.0, privateExpense = 0.0;
 
+  for (var txn in transactions) {
+    if (txn.walletType == 'family') {
+      if (txn.transactionType == 'income') familyIncome += txn.transactionAmount;
+      if (txn.transactionType == 'expense') familyExpense += txn.transactionAmount;
+    }
+    if (txn.walletType == 'private') {
+      if (txn.transactionType == 'income') privateIncome += txn.transactionAmount;
+      if (txn.transactionType == 'expense') privateExpense += txn.transactionAmount;
+    }
+  }
+
+  return {
+    'Гэр бүлийн гүйлгээ': {
+      'income': familyIncome,
+      'expense': familyExpense,
+    },
+    'Хувийн гүйлгээ': {
+      'income': privateIncome,
+      'expense': privateExpense,
+    },
+  };
+}
+}

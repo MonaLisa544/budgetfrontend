@@ -32,6 +32,26 @@ class AuthController extends GetxController {
       Get.snackbar('Error', 'Invalid credentials');
     }
   }
+  Future<bool> joinFamily(String familyName, String password) async {
+  isLoading.value = true;
+  try {
+    bool result = await AuthService.joinFamily(
+      familyName: familyName,
+      password: password,
+    );
+    if (result) {
+      // Амжилттай бол хэрэглэгчийн мэдээллийг дахин татаж, UI шинэчилнэ!
+      await fetchUser();
+      hasFamily.value = true;
+      Get.snackbar('Амжилттай', 'Гэр бүлд амжилттай нэгдлээ!');
+    } else {
+      Get.snackbar('Алдаа', 'Гэр бүлд нэгдэхэд алдаа гарлаа!');
+    }
+    return result;
+  } finally {
+    isLoading.value = false;
+  }
+}
 
   Future<void> signup(String lastName, String firstName, String email, String password, String passwordConfirmation) async {
     isLoading.value = true;
@@ -39,8 +59,12 @@ class AuthController extends GetxController {
     isLoading.value = false;
 
     if (success) {
+       await fetchUser();// Navigate to main tab
       Get.snackbar('Success', 'Account created');
-      Get.offAll(() => MainTabView());  // Navigate to the main tab
+       Get.offAll(() {
+        Get.put(WalletController()); // 👉 ЭНД WalletController-оо бүртгэнэ
+        return MainTabView();
+      });   // Navigate to the main tab
     } else {
       Get.snackbar('Error', 'Signup failed');
     }

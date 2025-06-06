@@ -4,7 +4,7 @@ import 'package:budgetfrontend/services/api_service.dart';
 
 String getGoalTypeLabel(String type) {
   final t = type.toLowerCase();
-  if (t == 'зээл' || t == 'хадгаламж') {
+  if (t == 'loan' || t == 'saving') {
     return '${t[0].toUpperCase()}${t.substring(1)}';
   }
   return '';
@@ -52,9 +52,14 @@ Future<GoalModel?> showGoalSelectorDialogByType({
 
                 final allGoals = snapshot.data ?? [];
                 // type-р filter хийж байна!
-                final filteredGoals = allGoals
-                    .where((goal) => goal.goalType.toLowerCase() == type.toLowerCase())
-                    .toList();
+               final filteredGoals = allGoals.where((goal) {
+  final gt = goal.goalType.toLowerCase();
+  final tt = type.toLowerCase();
+  if (gt == tt) return true;
+  if ((gt == "saving" && tt == "хадгаламж") || (gt == "хадгаламж" && tt == "saving")) return true;
+  if ((gt == "loan" && tt == "зээл") || (gt == "зээл" && tt == "loan")) return true;
+  return false;
+}).toList();
 
                 if (filteredGoals.isEmpty) {
                   return const Center(child: Text("No goals"));
